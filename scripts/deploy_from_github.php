@@ -1,10 +1,11 @@
 <?php
 require_once __DIR__ . '/sync_to_live.php';
 
-$code = <<<'PHP'
-$base_raw = 'https://raw.githubusercontent.com/chidokato/sunshinegroup/master/';
+$commit = trim(shell_exec('git rev-parse HEAD'));
+$code = <<<PHP
+\$base_raw = 'https://raw.githubusercontent.com/chidokato/sunshinegroup/{$commit}/';
 
-$files = [
+\$files = [
     // Theme files
     'wp-content/themes/flatsome-child/style.css',
     'wp-content/themes/flatsome-child/functions.php',
@@ -17,20 +18,21 @@ $files = [
     'wp-content/plugins/sunshine-project-manager/sunshine-project-manager.php',
 ];
 
-$results = [];
-foreach ($files as $file) {
-    $url = $base_raw . $file;
-    $content = @file_get_contents($url);
-    if ($content !== false && strlen($content) > 0) {
-        $dest = ABSPATH . $file;
-        $dir = dirname($dest);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
+\$results = [];
+foreach (\$files as \$file) {
+    \$url = \$base_raw . \$file . '?t=' . time();
+    \$ctx = stream_context_create(['http' => ['header' => "Cache-Control: no-cache\r\nPragma: no-cache\r\n"]]);
+    \$content = @file_get_contents(\$url, false, \$ctx);
+    if (\$content !== false && strlen(\$content) > 0) {
+        \$dest = ABSPATH . \$file;
+        \$dir = dirname(\$dest);
+        if (!is_dir(\$dir)) {
+            @mkdir(\$dir, 0755, true);
         }
-        $written = file_put_contents($dest, $content);
-        $results[$file] = ($written > 0) ? 'OK (' . $written . ' bytes)' : 'FAIL_WRITE';
+        \$written = file_put_contents(\$dest, \$content);
+        \$results[\$file] = (\$written > 0) ? 'OK (' . \$written . ' bytes)' : 'FAIL_WRITE';
     } else {
-        $results[$file] = 'FAIL_DOWNLOAD';
+        \$results[\$file] = 'FAIL_DOWNLOAD';
     }
 }
 
@@ -41,10 +43,10 @@ switch_theme('flatsome-child');
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 activate_plugin('sunshine-project-manager/sunshine-project-manager.php');
 
-$results['active_theme'] = get_stylesheet();
-$results['is_plugin_active'] = is_plugin_active('sunshine-project-manager/sunshine-project-manager.php');
+\$results['active_theme'] = get_stylesheet();
+\$results['is_plugin_active'] = is_plugin_active('sunshine-project-manager/sunshine-project-manager.php');
 
-update_option('sunshine_github_deploy_results', json_encode($results));
+update_option('sunshine_github_deploy_results', json_encode(\$results));
 header('X-Sunshine-Deploy-Status: DONE');
 PHP;
 
