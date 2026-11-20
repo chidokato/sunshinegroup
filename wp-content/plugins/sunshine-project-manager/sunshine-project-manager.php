@@ -1509,6 +1509,35 @@ class Sunshine_Project_Manager {
                 return current_user_can( 'manage_options' );
             },
         ] );
+
+        register_rest_route( 'sunshine/v1', '/fix-htaccess', [
+            'methods'             => 'POST',
+            'callback'            => function() {
+                $htaccess_file = ABSPATH . '.htaccess';
+                $exists = file_exists( $htaccess_file );
+                $current_content = $exists ? file_get_contents( $htaccess_file ) : '';
+                
+                // Clean all old WordPress rewrite blocks
+                $cleaned = preg_replace( '/# BEGIN WordPress.*?# END WordPress\s*/s', '', $current_content );
+                
+                $wp_rules = "# BEGIN WordPress\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]\nRewriteBase /\nRewriteRule ^index\\.php$ - [L]\nRewriteCond %{REQUEST_FILENAME} !-f\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule . /index.php [L]\n</IfModule>\n# END WordPress\n\n";
+                
+                $final_content = $wp_rules . trim( $cleaned ) . "\n";
+                $saved = file_put_contents( $htaccess_file, $final_content );
+                
+                flush_rewrite_rules( true );
+                
+                return [
+                    'success' => true,
+                    'htaccess_exists' => $exists,
+                    'cleaned_content' => $final_content,
+                    'saved' => $saved,
+                ];
+            },
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            },
+        ] );
     }
 
     public static function handle_asset_upload( $request ) {

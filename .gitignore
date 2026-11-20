@@ -1,5 +1,6 @@
 # WordPress Core & Config
 wp-config.php
+.htaccess
 config-live-sync.php
 *.log
 *.tmp
