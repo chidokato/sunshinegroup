@@ -1498,6 +1498,17 @@ class Sunshine_Project_Manager {
                 return current_user_can( 'upload_files' );
             },
         ] );
+
+        register_rest_route( 'sunshine/v1', '/flush-permalinks', [
+            'methods'             => 'POST',
+            'callback'            => function() {
+                flush_rewrite_rules( true );
+                return [ 'success' => true, 'rules_flushed' => true ];
+            },
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            },
+        ] );
     }
 
     public static function handle_asset_upload( $request ) {
