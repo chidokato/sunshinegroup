@@ -1032,16 +1032,12 @@ class Sunshine_Project_Manager {
             -webkit-backdrop-filter: none !important;
         }
         body.single-du_an #header,
-        body.single-du_an .header-wrapper,
-        body.single-du_an .header-main {
+        body.single-du_an .header-wrapper {
             background-color: #0b2246 !important;
             background: #0b2246 !important;
         }
         .header-wrapper.stuck,
-        .stuck.header-wrapper,
-        .stuck .header-main,
-        .stuck .header-bg-color,
-        .stuck .header-bg-container {
+        .stuck.header-wrapper {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -1053,6 +1049,10 @@ class Sunshine_Project_Manager {
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
             border-bottom: 2px solid #D4AF37 !important;
             transition: all 0.3s ease !important;
+        }
+        .stuck .header-main {
+            height: 70px !important;
+            min-height: 70px !important;
         }
         body.admin-bar .header-wrapper.stuck,
         body.admin-bar .stuck.header-wrapper {
