@@ -28,6 +28,9 @@ class Sunshine_Project_Manager {
         // Tự động liên kết 2 chiều giữa Dự Án BĐS và Bài Viết Tin Tức thông qua Thẻ Tag
         add_filter( 'the_content', [ __CLASS__, 'enhance_content_with_project_links' ] );
 
+        // Nạp toàn bộ CSS giao diện Sunshine chuẩn (Header, Logo, Grid 4 cột, 1340px)
+        add_action( 'wp_head', [ __CLASS__, 'output_sunshine_styles' ], 99 );
+
         // Shortcode tự động hiển thị dự án ra Trang Chủ
         add_shortcode( 'sunshine_du_an', [ __CLASS__, 'render_projects_shortcode' ] );
         add_shortcode( 'sunshine_projects', [ __CLASS__, 'render_projects_shortcode' ] );
@@ -966,6 +969,285 @@ class Sunshine_Project_Manager {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Nạp toàn bộ CSS Sunshine chuẩn (Logo Avatar, Sticky Header, Lưới Dự án 4 cột, 1340px)
+     * Đảm bảo website luôn hiển thị đẹp 100% không phụ thuộc vào theme
+     */
+    public static function output_sunshine_styles() {
+        ?>
+        <style id="sunshine-master-styles">
+        /* 1. ĐỘ RỘNG WEBSITE CHUẨN HIỆN ĐẠI 1340PX */
+        .container, .row, .kbds-container, .header-inner, .site-width {
+            max-width: 1340px !important;
+        }
+        
+        /* 2. ẨN HOÀN TOÀN THANH TOP-BAR */
+        #top-bar, .header-top, .top-bar-nav {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            visibility: hidden !important;
+        }
+
+        /* 3. LOGO AVATAR CHUYÊN VIÊN TRÒN VIỀN VÀNG */
+        #logo {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+        }
+        #logo a {
+            display: flex !important;
+            align-items: center !important;
+        }
+        #logo img {
+            max-height: 54px !important;
+            height: 54px !important;
+            width: 54px !important;
+            min-width: 54px !important;
+            min-height: 54px !important;
+            border-radius: 50% !important;
+            border: 2px solid #D4AF37 !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+            background: #FFFFFF !important;
+            object-fit: cover !important;
+            object-position: center 15% !important;
+            margin: 0 !important;
+            transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+        }
+        #logo a img:not(:first-child) { display: none !important; }
+        #logo a img:first-child { display: block !important; }
+        .stuck #logo img {
+            max-height: 48px !important;
+            height: 48px !important;
+            width: 48px !important;
+            min-height: 48px !important;
+            min-width: 48px !important;
+        }
+
+        /* 4. THANH HEADER CUỘN STICKY ĐỔI MÀU NAVY-GOLD */
+        #header {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .header-wrapper.stuck,
+        .stuck.header-wrapper {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            z-index: 99999 !important;
+            background: rgba(11, 34, 70, 0.97) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+            border-bottom: 2px solid #D4AF37 !important;
+            transition: all 0.3s ease !important;
+        }
+        body.admin-bar .header-wrapper.stuck {
+            top: 32px !important;
+        }
+        @media (max-width: 782px) {
+            body.admin-bar .header-wrapper.stuck { top: 46px !important; }
+        }
+
+        /* 5. MENU CHÍNH 1 HÀNG NGANG CHỮ VÀNG KIM */
+        .header-nav-main {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex-wrap: nowrap !important;
+            gap: 2px !important;
+        }
+        .header-nav-main > li > a {
+            font-family: 'Plus Jakarta Sans', 'Montserrat', 'Roboto Condensed', sans-serif !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.15px !important;
+            color: #fcfc73 !important;
+            padding: 8px 5px !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            transition: color 0.25s ease, text-shadow 0.25s ease !important;
+        }
+        .header-nav-main > li > a:hover {
+            color: #FFFFFF !important;
+            text-shadow: 0 0 10px rgba(252, 252, 115, 0.7) !important;
+        }
+        .header-nav-main > li.active > a,
+        .header-nav-main > li.current-menu-item > a,
+        .header-nav-main > li.current_page_item > a {
+            color: #fcfc73 !important;
+            border-bottom: 2px solid #D4AF37 !important;
+        }
+        .header-nav > li.html,
+        .header-nav > li.header-divider,
+        .header-search,
+        .header-search-form,
+        .search-popup {
+            display: none !important;
+        }
+
+        /* 6. DROPDOWN MENU CON CHUẨN SUNSHINE NAVY */
+        .nav-dropdown, .sub-menu {
+            border-radius: 10px !important;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            padding: 8px 0 !important;
+            background: #0B2246 !important;
+        }
+        .nav-dropdown > li > a, .sub-menu > li > a {
+            font-size: 13.5px !important;
+            font-weight: 600 !important;
+            color: #F8FAFC !important;
+            padding: 10px 18px !important;
+        }
+
+        /* 7. LƯỚI CARD DỰ ÁN 4 CỘT CHUẨN KENHBATDONGSAN */
+        .kbds-home-projects-grid,
+        .kbds-grid-4 {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 24px !important;
+            margin-top: 24px !important;
+            margin-bottom: 40px !important;
+            width: 100% !important;
+        }
+        .kbds-project-card,
+        .kbds-card {
+            background: #FFFFFF !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+            border: 1px solid #E2E8F0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+        }
+        .kbds-project-card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15) !important;
+        }
+        .kbds-card-media {
+            position: relative !important;
+            width: 100% !important;
+            height: 220px !important;
+            overflow: hidden !important;
+            background: #0B2246 !important;
+        }
+        .kbds-card-media a {
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .kbds-card-media img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            display: block !important;
+            transition: transform 0.5s ease !important;
+        }
+        .kbds-project-card:hover .kbds-card-media img {
+            transform: scale(1.05) !important;
+        }
+        .kbds-badge-status {
+            position: absolute !important;
+            top: 12px !important;
+            left: 12px !important;
+            background: #0B2246 !important;
+            color: #fcfc73 !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            padding: 4px 10px !important;
+            border-radius: 4px !important;
+            border: 1px solid #D4AF37 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            z-index: 2 !important;
+        }
+        .kbds-card-body {
+            padding: 16px 18px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            flex-grow: 1 !important;
+        }
+        .kbds-developer-tag {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            color: #64748B !important;
+            margin-bottom: 6px !important;
+            display: block !important;
+        }
+        .kbds-card-title {
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            line-height: 1.4 !important;
+            margin: 0 0 8px 0 !important;
+            color: #0B2246 !important;
+        }
+        .kbds-card-title a {
+            color: #0B2246 !important;
+            text-decoration: none !important;
+        }
+        .kbds-card-title a:hover {
+            color: #C59B27 !important;
+        }
+        .kbds-card-location {
+            font-size: 12.5px !important;
+            color: #64748B !important;
+            margin: 0 0 14px 0 !important;
+            line-height: 1.4 !important;
+        }
+        .kbds-card-footer {
+            margin-top: auto !important;
+            padding-top: 12px !important;
+            border-top: 1px solid #F1F5F9 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        .kbds-price-label {
+            font-size: 11px !important;
+            color: #94A3B8 !important;
+            display: block !important;
+        }
+        .kbds-price-value {
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            color: #C59B27 !important;
+        }
+        .kbds-btn-card {
+            padding: 6px 12px !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            color: #0B2246 !important;
+            background: #F8FAFC !important;
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 6px !important;
+            text-decoration: none !important;
+        }
+        .kbds-btn-card:hover {
+            background: #0B2246 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* 8. RESPONSIVE CHO TABLET & MOBILE */
+        @media (max-width: 1024px) {
+            .kbds-home-projects-grid, .kbds-grid-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 18px !important;
+            }
+        }
+        @media (max-width: 600px) {
+            .kbds-home-projects-grid, .kbds-grid-4 {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+        }
+        </style>
+        <?php
     }
 }
 
