@@ -35,6 +35,9 @@ class Sunshine_Project_Manager {
         add_shortcode( 'sunshine_du_an', [ __CLASS__, 'render_projects_shortcode' ] );
         add_shortcode( 'sunshine_projects', [ __CLASS__, 'render_projects_shortcode' ] );
 
+        // API an toàn cho phép đồng bộ hình ảnh trực tiếp vào wp-content/uploads/
+        add_action( 'rest_api_init', [ __CLASS__, 'register_asset_sync_route' ] );
+
         // Tự động chuyển hướng 301 từ URL cũ (page) sang URL mới /du-an/
         add_action( 'template_redirect', [ __CLASS__, 'handle_301_redirects' ], 1 );
 
@@ -1482,6 +1485,57 @@ class Sunshine_Project_Manager {
         }
         </style>
         <?php
+    }
+
+    /**
+     * Endpoint hỗ trợ đồng bộ các tệp tin media chính xác theo đường dẫn gốc
+     */
+    public static function register_asset_sync_route() {
+        register_rest_route( 'sunshine/v1', '/upload-asset', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_asset_upload' ],
+            'permission_callback' => function() {
+                return current_user_can( 'upload_files' );
+            },
+        ] );
+    }
+
+    public static function handle_asset_upload( $request ) {
+        $params = $request->get_json_params();
+        $rel_path = sanitize_text_field( $params['path'] ?? '' );
+        $b64_data = $params['data'] ?? '';
+
+        if ( empty( $rel_path ) || empty( $b64_data ) ) {
+            return new WP_Error( 'missing_params', 'Thiếu đường dẫn hoặc dữ liệu file', [ 'status' => 400 ] );
+        }
+
+        $rel_path = ltrim( str_replace( '\\', '/', $rel_path ), '/' );
+        if ( strpos( $rel_path, 'wp-content/uploads/' ) !== 0 ) {
+            return new WP_Error( 'invalid_path', 'Đường dẫn phải nằm trong wp-content/uploads/', [ 'status' => 403 ] );
+        }
+
+        $dest = ABSPATH . $rel_path;
+        $dir = dirname( $dest );
+        if ( ! is_dir( $dir ) ) {
+            wp_mkdir_p( $dir );
+        }
+
+        $raw = base64_decode( $b64_data );
+        if ( $raw === false ) {
+            return new WP_Error( 'invalid_data', 'Dữ liệu base64 không hợp lệ', [ 'status' => 400 ] );
+        }
+
+        $written = file_put_contents( $dest, $raw );
+        if ( $written === false ) {
+            return new WP_Error( 'write_failed', 'Không thể ghi file lên ổ cứng', [ 'status' => 500 ] );
+        }
+
+        return [
+            'success' => true,
+            'path'    => $rel_path,
+            'bytes'   => $written,
+            'url'     => home_url( '/' . $rel_path ),
+        ];
     }
 }
 
