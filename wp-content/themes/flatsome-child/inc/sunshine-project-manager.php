@@ -352,6 +352,15 @@ class Sunshine_Project_Manager {
                 // Trạng thái dự án
                 $status_terms = wp_get_post_terms( $post_id, 'trang_thai_du_an', array( 'fields' => 'names' ) );
                 $status_label = ! empty( $status_terms ) && ! is_wp_error( $status_terms ) ? $status_terms[0] : 'Đang mở bán';
+                $status_map = [
+                    'dang-mo-ban' => 'Đang mở bán',
+                    'sap-mo-ban'  => 'Sắp mở bán',
+                    'da-ban-giao' => 'Đã bàn giao',
+                    'hot'         => 'Đang mở bán',
+                ];
+                if ( isset( $status_map[$status_label] ) ) {
+                    $status_label = $status_map[$status_label];
+                }
             ?>
             <article class="kbds-card kbds-project-card">
                 <div class="kbds-card-media">
