@@ -1381,7 +1381,10 @@ class Sunshine_Project_Manager {
                 display: none !important;
             }
             .kbds-project-subnav {
-                top: 60px !important;
+                top: 70px !important;
+            }
+            body.admin-bar .kbds-project-subnav {
+                top: 116px !important;
             }
             .kbds-project-subnav .kbds-container {
                 padding: 6px 10px !important;
