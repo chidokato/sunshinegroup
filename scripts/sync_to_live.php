@@ -7,9 +7,11 @@
  * (https://sunshine-group.com.vn) qua WordPress REST API & Application Passwords.
  * 
  * Cách dùng:
- * 1. Cấu hình file config-live-sync.php (hoặc truyền qua tham số)
- * 2. Đăng 1 bài cụ thể: php scripts/sync_to_live.php --post_id=965
- * 3. Kiểm tra kết nối:  php scripts/sync_to_live.php --test
+ * 1. Cấu hình file config-live-sync.php
+ * 2. Kiểm tra kết nối: c:\xampp\php\php.exe scripts/sync_to_live.php --test
+ * 3. Xem danh sách bài: c:\xampp\php\php.exe scripts/sync_to_live.php --list
+ * 4. Đồng bộ 1 bài:     c:\xampp\php\php.exe scripts/sync_to_live.php --post_id=965
+ * 5. Đồng bộ tất cả:   c:\xampp\php\php.exe scripts/sync_to_live.php --sync-all
  * =========================================================================
  */
 
@@ -51,7 +53,7 @@ class SunshineLiveSync {
     /**
      * Gửi yêu cầu HTTP đến REST API Live
      */
-    private function request( $endpoint, $method = 'GET', $data = null, $headers = [] ) {
+    public function request( $endpoint, $method = 'GET', $data = null, $headers = [] ) {
         $url = $this->live_url . '/wp-json' . $endpoint;
 
         $default_headers = [
@@ -257,13 +259,82 @@ class SunshineLiveSync {
             return false;
         }
     }
+
+    /**
+     * 4. Đăng trực tiếp một bài viết bất kỳ lên Live
+     */
+    public function publish_direct( $title, $content, $excerpt = '', $slug = '' ) {
+        $payload = [
+            'title'   => $title,
+            'content' => $content,
+            'status'  => 'publish',
+        ];
+        if ( $excerpt ) $payload['excerpt'] = $excerpt;
+        if ( $slug ) $payload['slug'] = $slug;
+
+        $res = $this->request( '/wp/v2/posts', 'POST', $payload );
+        if ( in_array( $res['code'], [200, 201] ) ) {
+            echo "[THÀNH CÔNG] Đã xuất bản bài viết trực tiếp lên Live Website!\n";
+            echo " - Tiêu đề: " . ($res['body']['title']['rendered'] ?? $title) . "\n";
+            echo " - Live Post ID: " . ($res['body']['id'] ?? 'N/A') . "\n";
+            echo " - Link xem: " . ($res['body']['link'] ?? '') . "\n";
+            return $res['body']['id'] ?? true;
+        } else {
+            echo "[LỖI] Đăng bài thất bại! Mã HTTP: {$res['code']}\n";
+            if ( ! empty( $res['body']['message'] ) ) {
+                echo " - Chi tiết: " . $res['body']['message'] . "\n";
+            }
+            return false;
+        }
+    }
+
+    /**
+     * 5. Liệt kê các bài viết trên Localhost
+     */
+    public function list_localhost_posts( $limit = 10 ) {
+        $posts = get_posts([
+            'numberposts' => $limit,
+            'post_status' => 'any',
+            'orderby'     => 'date',
+            'order'       => 'DESC'
+        ]);
+
+        echo "=== DANH SÁCH BÀI VIẾT TRÊN LOCALHOST (Tối đa {$limit} bài) ===\n";
+        echo sprintf("%-6s | %-12s | %-12s | %s\n", "ID", "Trạng thái", "Ngày tạo", "Tiêu đề");
+        echo str_repeat("-", 80) . "\n";
+        foreach ( $posts as $p ) {
+            echo sprintf("%-6d | %-12s | %-12s | %s\n", $p->ID, $p->post_status, substr($p->post_date, 0, 10), $p->post_title);
+        }
+    }
+
+    /**
+     * 6. Đồng bộ toàn bộ bài viết Localhost lên Live
+     */
+    public function sync_all( $limit = 10 ) {
+        $posts = get_posts([
+            'numberposts' => $limit,
+            'post_status' => 'publish',
+            'orderby'     => 'date',
+            'order'       => 'DESC'
+        ]);
+
+        echo "Đang đồng bộ " . count($posts) . " bài viết đã xuất bản từ Localhost lên Live...\n\n";
+        $success = 0;
+        foreach ( $posts as $p ) {
+            if ( $this->sync_post( $p->ID ) ) {
+                $success++;
+            }
+            echo "\n";
+        }
+        echo "[HOÀN TẤT] Đồng bộ thành công: {$success}/" . count($posts) . " bài viết.\n";
+    }
 }
 
 // =========================================================================
 // XỬ LÝ DÒNG LỆNH (CLI RUNNER)
 // =========================================================================
 if ( php_sapi_name() === 'cli' && isset( $argv ) ) {
-    $options = getopt( '', [ 'test', 'post_id:', 'user:', 'pass:', 'live_url:' ] );
+    $options = getopt( '', [ 'test', 'list', 'sync-all', 'post_id:', 'user:', 'pass:', 'live_url:' ] );
 
     $user     = $options['user'] ?? null;
     $pass     = $options['pass'] ?? null;
@@ -276,13 +347,24 @@ if ( php_sapi_name() === 'cli' && isset( $argv ) ) {
         exit;
     }
 
+    if ( isset( $options['list'] ) ) {
+        $sync->list_localhost_posts( 15 );
+        exit;
+    }
+
+    if ( isset( $options['sync-all'] ) ) {
+        $sync->sync_all( 20 );
+        exit;
+    }
+
     if ( ! empty( $options['post_id'] ) ) {
         $sync->sync_post( intval( $options['post_id'] ) );
         exit;
     }
 
     echo "Cách dùng:\n";
-    echo "  php scripts/sync_to_live.php --test\n";
-    echo "  php scripts/sync_to_live.php --post_id=<ID_BAI_VIET>\n";
-    echo "  php scripts/sync_to_live.php --post_id=<ID> --user=<admin> --pass=\"<mat_khau_api>\"\n";
+    echo "  php scripts/sync_to_live.php --test             (Kiểm tra kết nối API)\n";
+    echo "  php scripts/sync_to_live.php --list             (Xem danh sách bài viết trên localhost)\n";
+    echo "  php scripts/sync_to_live.php --post_id=<ID>     (Đồng bộ 1 bài viết theo ID)\n";
+    echo "  php scripts/sync_to_live.php --sync-all         (Đồng bộ tất cả bài viết publish)\n";
 }
