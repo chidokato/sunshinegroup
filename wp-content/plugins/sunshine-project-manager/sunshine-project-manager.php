@@ -1031,26 +1031,36 @@ class Sunshine_Project_Manager {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
         }
+        body.single-du_an #header,
+        body.single-du_an .header-wrapper,
+        body.single-du_an .header-main {
+            background-color: #0b2246 !important;
+            background: #0b2246 !important;
+        }
         .header-wrapper.stuck,
-        .stuck.header-wrapper {
+        .stuck.header-wrapper,
+        .stuck .header-main,
+        .stuck .header-bg-color,
+        .stuck .header-bg-container {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
             width: 100% !important;
             z-index: 99999 !important;
-            background: rgba(11, 34, 70, 0.97) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            background: #0b2246 !important;
+            background-color: #0b2246 !important;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
             border-bottom: 2px solid #D4AF37 !important;
             transition: all 0.3s ease !important;
         }
-        body.admin-bar .header-wrapper.stuck {
+        body.admin-bar .header-wrapper.stuck,
+        body.admin-bar .stuck.header-wrapper {
             top: 32px !important;
         }
         @media (max-width: 782px) {
-            body.admin-bar .header-wrapper.stuck { top: 46px !important; }
+            body.admin-bar .header-wrapper.stuck,
+            body.admin-bar .stuck.header-wrapper { top: 46px !important; }
         }
 
         /* 5. MENU CHÍNH 1 HÀNG NGANG CHỮ VÀNG KIM */
@@ -1244,6 +1254,227 @@ class Sunshine_Project_Manager {
             .kbds-home-projects-grid, .kbds-grid-4 {
                 grid-template-columns: 1fr !important;
                 gap: 16px !important;
+            }
+        }
+
+        /* ========================================================
+           9. THANH MENU PHỤ CỐ ĐỊNH CHUẨN DỰ ÁN (STICKY SUBNAV)
+           ======================================================== */
+        html {
+            scroll-behavior: smooth !important;
+        }
+
+        .kbds-project-subnav {
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            top: 70px !important;
+            z-index: 999 !important;
+            background: #0b2246 !important;
+            border-bottom: 2px solid #d4af37 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        body.admin-bar .kbds-project-subnav {
+            top: 102px !important;
+        }
+
+        .kbds-project-subnav .kbds-container {
+            max-width: 1240px !important;
+            margin: 0 auto !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 10px 20px !important;
+            gap: 15px !important;
+        }
+
+        .kbds-subnav-brand {
+            font-weight: 800 !important;
+            font-size: 14.5px !important;
+            color: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            order: 1 !important;
+            flex-shrink: 0 !important;
+        }
+
+        .kbds-subnav-dot {
+            display: inline-block !important;
+            width: 9px !important;
+            height: 9px !important;
+            background: #d4af37 !important;
+            border-radius: 50% !important;
+            box-shadow: 0 0 8px #d4af37 !important;
+        }
+
+        .kbds-subnav-links {
+            display: flex !important;
+            align-items: center !important;
+            gap: 14px !important;
+            white-space: nowrap !important;
+            flex: 1 1 auto !important;
+            justify-content: center !important;
+            order: 2 !important;
+            overflow: visible !important;
+        }
+
+        .kbds-subnav-links::-webkit-scrollbar {
+            display: none !important;
+        }
+
+        .kbds-subnav-link {
+            color: #e2e8f0 !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            padding: 8px 14px !important;
+            border-radius: 6px !important;
+            transition: all 0.2s ease !important;
+            white-space: nowrap !important;
+            border-bottom: 2px solid transparent !important;
+        }
+
+        .kbds-subnav-link:hover,
+        .kbds-subnav-link:focus,
+        .kbds-subnav-link.active {
+            color: #d4af37 !important;
+            background: rgba(212, 175, 55, 0.15) !important;
+            border-bottom: 2px solid #d4af37 !important;
+        }
+
+        .kbds-subnav-cta {
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%) !important;
+            color: #0b2246 !important;
+            padding: 9px 20px !important;
+            border-radius: 20px !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35) !important;
+            transition: all 0.2s ease !important;
+            order: 3 !important;
+            margin-left: auto !important;
+            flex-shrink: 0 !important;
+        }
+
+        .kbds-subnav-cta:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5) !important;
+            color: #ffffff !important;
+        }
+
+        /* Offset cuộn chuẩn để không bị đè bởi sticky header/subnav */
+        section[id], div[id], h2[id], h3[id],
+        #tong-quan, #vi-tri, #quy-hoach, #san-pham, #tien-ich, #chinh-sach, #tien-do, #hoi-dap, #tin-tuc-du-an, #dang-ky, #nhan-bang-gia, #mat-bang, #can-ho-dual-key {
+            scroll-margin-top: 140px !important;
+        }
+
+        @media (max-width: 820px) {
+            .kbds-subnav-brand {
+                display: none !important;
+            }
+            .kbds-project-subnav {
+                top: 60px !important;
+            }
+            .kbds-project-subnav .kbds-container {
+                padding: 6px 10px !important;
+                gap: 6px !important;
+                justify-content: flex-start !important;
+            }
+            .kbds-subnav-links {
+                justify-content: flex-start !important;
+                gap: 6px !important;
+                order: 1 !important;
+                overflow-x: auto !important;
+                scrollbar-width: none !important;
+            }
+            .kbds-subnav-link {
+                font-size: 12px !important;
+                padding: 6px 9px !important;
+                background: rgba(255, 255, 255, 0.08) !important;
+            }
+            .kbds-subnav-cta {
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+                order: 2 !important;
+                margin-left: auto !important;
+            }
+            section[id], div[id], h2[id], h3[id] {
+                scroll-margin-top: 110px !important;
+            }
+        }
+
+        .kbds-project-subnav br,
+        .kbds-subnav-links br,
+        .kbds-subnav-brand br,
+        .kbds-container br {
+            display: none !important;
+        }
+
+        .kbds-project-subnav p {
+            margin: 0 !important;
+            padding: 0 !important;
+            display: contents !important;
+            order: 3 !important;
+            margin-left: auto !important;
+        }
+
+        /* ========================================================
+           10. BỐ CỤC TRANG DỰ ÁN CHI TIẾT & RESPONSIVE MOBILE
+           ======================================================== */
+        .kbds-container,
+        .single-du_an .kbds-container {
+            max-width: 1240px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .single-du_an table {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important;
+        }
+
+        .single-du_an img,
+        .single-du_an figure img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        @media (max-width: 820px) {
+            .kbds-container,
+            .single-du_an .kbds-container {
+                padding-left: 14px !important;
+                padding-right: 14px !important;
+            }
+            .single-du_an [style*="grid-template-columns:1.15fr 0.85fr"],
+            .single-du_an [style*="grid-template-columns: 1.15fr 0.85fr"],
+            .single-du_an [style*="grid-template-columns:1.1fr 0.9fr"],
+            .single-du_an [style*="grid-template-columns: 1.1fr 0.9fr"],
+            .single-du_an [style*="grid-template-columns:1.2fr 0.8fr"],
+            .single-du_an [style*="grid-template-columns: 1.2fr 0.8fr"],
+            .single-du_an [style*="grid-template-columns:1fr 1fr"],
+            .single-du_an [style*="grid-template-columns: 1fr 1fr"],
+            .single-du_an [style*="grid-template-columns:1fr 1.2fr"],
+            .single-du_an [style*="grid-template-columns: 1fr 1.2fr"],
+            .single-du_an [style*="grid-template-columns:repeat(2,1fr)"],
+            .single-du_an [style*="grid-template-columns: repeat(2, 1fr)"],
+            .single-du_an .kbds-2col-grid,
+            .single-du_an .kbds-hero-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 20px !important;
             }
         }
         </style>
