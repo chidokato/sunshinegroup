@@ -91,20 +91,13 @@ define( 'WP_DEBUG', false );
 
 /* Add any custom values between this line and the "stop editing" line. */
 /**
- * Tự động nhận diện môi trường: Localhost hay Production (Live Domain)
- * Khi git push lên server thật, WordPress tự động nhận domain chính, không bao giờ trỏ về localhost
+ * Nhận diện môi trường linh hoạt:
+ * - Khi chạy ở Localhost: tự động dùng URL Localhost để làm việc bình thường.
+ * - Khi git push lên Server thật (Hosting): KHÔNG ghi đè URL, WordPress tự động lấy trực tiếp từ Database (wp_options) là https://sunshine-group.com.vn.
  */
-if ( defined( 'WP_CLI' ) && ! isset( $_SERVER['HTTP_HOST'] ) ) {
+if ( isset( $_SERVER['HTTP_HOST'] ) && ( strpos( $_SERVER['HTTP_HOST'], 'localhost' ) !== false || strpos( $_SERVER['HTTP_HOST'], '127.0.0.1' ) !== false ) ) {
     define( 'WP_HOME', 'http://localhost/www/Sunshinegroup' );
     define( 'WP_SITEURL', 'http://localhost/www/Sunshinegroup' );
-} elseif ( isset( $_SERVER['HTTP_HOST'] ) && ( strpos( $_SERVER['HTTP_HOST'], 'localhost' ) !== false || strpos( $_SERVER['HTTP_HOST'], '127.0.0.1' ) !== false ) ) {
-    define( 'WP_HOME', 'http://localhost/www/Sunshinegroup' );
-    define( 'WP_SITEURL', 'http://localhost/www/Sunshinegroup' );
-} else {
-    $protocol = ( ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) ? 'https://' : 'http://';
-    $host = isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : 'sunshine-group.com.vn';
-    define( 'WP_HOME', $protocol . $host );
-    define( 'WP_SITEURL', $protocol . $host );
 }
 
 // Tối ưu hóa hiệu năng và kiểm soát dữ liệu
