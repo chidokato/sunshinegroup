@@ -135,3 +135,18 @@ function kbds_replace_localhost_urls_on_live( $content ) {
     }
     return $content;
 }
+
+/**
+ * =========================================================================
+ * TỰ ĐỘNG TÍCH HỢP QUẢN LÝ DỰ ÁN (SUNSHINE PROJECT MANAGER)
+ * =========================================================================
+ */
+$spm_theme_file  = __DIR__ . '/inc/sunshine-project-manager.php';
+$spm_plugin_file = defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR . '/sunshine-project-manager/sunshine-project-manager.php' : '';
+if ( ! class_exists( 'Sunshine_Project_Manager' ) ) {
+    if ( file_exists( $spm_theme_file ) ) {
+        require_once $spm_theme_file;
+    } elseif ( $spm_plugin_file && file_exists( $spm_plugin_file ) ) {
+        require_once $spm_plugin_file;
+    }
+}
