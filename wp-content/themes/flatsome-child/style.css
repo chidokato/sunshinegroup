@@ -1,0 +1,1588 @@
+/*
+Theme Name: Flatsome Child
+Theme URI: https://uxthemes.com/
+Description: Child theme for Flatsome (Sunshine Group)
+Author: UX-Themes
+Author URI: https://uxthemes.com/
+Template: Flatsome-WMC1L2sTcWqXipja
+Version: 3.0
+*/
+
+/* ========================================================
+   TÙY BIẾN DROPDOWN BẤT ĐỘNG SẢN (CHUẨN GIAO DIỆN SUNSHINE)
+   ======================================================== */
+.nav-dropdown {
+    background-color: #0b2246 !important;
+    border: 1px solid #1a386b !important;
+    border-radius: 4px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    padding: 6px 0 !important;
+    min-width: 300px !important;
+}
+
+.nav-dropdown > li > a {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 13.5px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+    padding: 14px 22px !important;
+    transition: all 0.25s ease !important;
+    display: block !important;
+    line-height: 1.4 !important;
+}
+
+/* Đường kẻ mảnh ngăn cách giữa 2 chuyên mục */
+.nav-dropdown > li:first-child > a {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Hiệu ứng khi rê chuột vào */
+.nav-dropdown > li > a:hover {
+    color: #d4af37 !important; /* Ánh vàng kim sang trọng */
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    padding-left: 26px !important;
+}
+
+/* Điểm nhấn màu vàng cho mục BẤT ĐỘNG SẢN trên thanh Menu chính */
+.header-nav .menu-item-bds > a {
+    color: #d4af37 !important;
+    font-weight: 700 !important;
+}
+
+/* Khối giới thiệu tiêu đề trên 2 trang chuyên mục */
+.category-hero-title {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================================
+   TỐI ƯU GIAO DIỆN THANH BÊN (LUXURY REAL ESTATE SIDEBAR)
+   ======================================================== */
+.sidebar-main, aside#secondary {
+    padding-left: 10px;
+}
+
+/* Tiêu đề Widget */
+.sidebar-main .widget-title,
+aside#secondary .widget-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    color: #0b2246 !important;
+    letter-spacing: 0.5px !important;
+    position: relative !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 18px !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.sidebar-main .widget-title::after,
+aside#secondary .widget-title::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 45px;
+    height: 2px;
+    background-color: #d4af37; /* Gạch chân màu vàng ánh kim */
+}
+
+/* 1. Widget Tìm Kiếm */
+.sidebar-main .widget_search,
+aside#secondary .widget_search {
+    margin-bottom: 25px !important;
+}
+
+.sidebar-main .search-form input[type="search"],
+aside#secondary .search-form input[type="search"] {
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+    padding: 10px 14px !important;
+    font-size: 13.5px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+}
+
+.sidebar-main .search-form input[type="search"]:focus,
+aside#secondary .search-form input[type="search"]:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+}
+
+.sidebar-main .search-form button,
+aside#secondary .search-form button {
+    background-color: #0b2246 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.sidebar-main .search-form button:hover,
+aside#secondary .search-form button:hover {
+    background-color: #d4af37 !important;
+    color: #0b2246 !important;
+}
+
+/* 2. Widget Hotline & Tư Vấn Sunshine */
+.sunshine-sidebar-hotline-card {
+    background: linear-gradient(135deg, #0b2246 0%, #163869 100%);
+    border-radius: 8px;
+    padding: 22px 18px;
+    color: #ffffff;
+    text-align: center;
+    border: 1px solid #1a3c74;
+    box-shadow: 0 8px 24px rgba(11, 34, 70, 0.16);
+    margin-bottom: 25px;
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.16);
+    padding: 3px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+    line-height: 1.35;
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-desc {
+    font-size: 12.5px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #d4af37;
+    color: #0b2246 !important;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 12px 16px;
+    border-radius: 5px;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35);
+    transition: all 0.3s ease;
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-btn:hover {
+    background: #e6c35c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.45);
+}
+
+.sunshine-sidebar-hotline-card .sb-hotline-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 10px;
+}
+
+/* 3. Widget Bài Viết Mới Flatsome */
+.sidebar-main .widget_flatsome_recent_posts ul,
+aside#secondary .widget_flatsome_recent_posts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-main .recent-blog-posts-li,
+aside#secondary .recent-blog-posts-li {
+    border-bottom: 1px dashed #e2e8f0 !important;
+    padding: 11px 0 !important;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-main .recent-blog-posts-li:last-child,
+aside#secondary .recent-blog-posts-li:last-child {
+    border-bottom: none !important;
+}
+
+.sidebar-main .recent-blog-posts,
+aside#secondary .recent-blog-posts {
+    align-items: center !important;
+}
+
+.sidebar-main .recent-blog-posts .badge,
+aside#secondary .recent-blog-posts .badge {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    width: 68px !important;
+    height: 52px !important;
+    min-width: 68px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.sidebar-main .recent-blog-posts a,
+aside#secondary .recent-blog-posts a {
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+    color: #1e293b !important;
+    line-height: 1.4 !important;
+    transition: color 0.2s ease !important;
+    display: block;
+}
+
+.sidebar-main .recent-blog-posts a:hover,
+aside#secondary .recent-blog-posts a:hover {
+    color: #b8860b !important;
+}
+
+.sidebar-main .recent-blog-posts .post_comments,
+aside#secondary .recent-blog-posts .post_comments {
+    display: none !important;
+}
+
+/* 4. Widget Chuyên Mục BĐS */
+.sidebar-main .widget_categories ul,
+aside#secondary .widget_categories ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-main .widget_categories li,
+aside#secondary .widget_categories li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.sidebar-main .widget_categories li a,
+aside#secondary .widget_categories li a {
+    color: #334155 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-main .widget_categories li a::before,
+aside#secondary .widget_categories li a::before {
+    content: "▸";
+    color: #d4af37;
+    font-size: 13px;
+    transition: transform 0.2s ease;
+}
+
+.sidebar-main .widget_categories li a:hover,
+aside#secondary .widget_categories li a:hover {
+    color: #b8860b !important;
+    transform: translateX(4px);
+}
+
+.sidebar-main .widget_categories .count,
+aside#secondary .widget_categories .count {
+    background-color: #f1f5f9;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+/* 5. Widget Thẻ Tag Dự Án (Tag Cloud) */
+.sidebar-main .tagcloud,
+aside#secondary .tagcloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding-top: 5px;
+}
+
+.sidebar-main .tagcloud a,
+aside#secondary .tagcloud a {
+    display: inline-block;
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+    text-decoration: none !important;
+    transition: all 0.25s ease !important;
+}
+
+.sidebar-main .tagcloud a:hover,
+aside#secondary .tagcloud a:hover {
+    background: #0b2246 !important;
+    color: #d4af37 !important;
+    border-color: #0b2246 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(11, 34, 70, 0.15);
+}
+
+/* ========================================================
+   TỐI ƯU GIAO DIỆN CUỐI BÀI VIẾT (ARTICLE FOOTER)
+   ======================================================== */
+/* Ẩn hoàn toàn Author Box admin xám và bình luận */
+.entry-author, .author-box, #comments, .comments-area {
+    display: none !important;
+}
+
+/* Tinh chỉnh thẻ Tags & Meta cuối bài viết */
+footer.entry-meta {
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 25px !important;
+    padding-top: 15px !important;
+    font-size: 13px !important;
+    color: #64748b !important;
+    text-align: left !important;
+}
+
+footer.entry-meta a {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #0b2246 !important;
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin: 2px 4px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+footer.entry-meta a:hover {
+    background: #0b2246;
+    color: #d4af37 !important;
+}
+
+/* Nút Next/Previous bài viết tiếp theo */
+.nav-previous, .nav-next {
+    padding: 12px 0;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.nav-previous a, .nav-next a {
+    color: #0b2246 !important;
+    transition: color 0.2s ease;
+}
+
+.nav-previous a:hover, .nav-next a:hover {
+    color: #d4af37 !important;
+}
+
+
+/* ========================================================
+   TỐI ƯU GIAO DIỆN BÀI VIẾT & LƯU TRỮ (CHUẨN BẤT ĐỘNG SẢN)
+   ======================================================== */
+
+/* 1. ẨN HOÀN TOÀN NGÀY THÁNG & TÁC GIẢ (BẢO VỆ NỘI DUNG EVERGREEN) */
+.badge.post-date,
+.post-date,
+.entry-meta-header,
+.entry-header-text .entry-meta,
+.posted-on,
+.byline,
+.article-inner .entry-meta {
+    display: none !important;
+}
+
+/* 2. TIÊU ĐỀ TRANG LƯU TRỮ / CHUYÊN MỤC / TAG SANG TRỌNG */
+.archive-page-header {
+    padding: 35px 0 25px 0 !important;
+    background: transparent !important;
+}
+
+.archive-page-header .page-title {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: #0b2246 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    margin-bottom: 5px !important;
+}
+
+.archive-page-header .is-divider {
+    background-color: #d4af37 !important;
+    height: 3px !important;
+    max-width: 60px !important;
+    margin: 12px auto 18px auto !important;
+}
+
+.archive-page-header .taxonomy-description {
+    color: #64748b !important;
+    font-size: 15px !important;
+    max-width: 750px !important;
+    margin: 0 auto !important;
+    line-height: 1.6 !important;
+}
+
+/* 3. LƯỚI BÀI VIẾT 3 CỘT (CARD HIỆN ĐẠI, ĐỒNG ĐỀU) */
+.luxury-post-grid .box,
+.blog-archive .box {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.luxury-post-grid .box:hover,
+.blog-archive .box:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 28px rgba(11, 34, 70, 0.12) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.luxury-post-grid .box-image,
+.blog-archive .box-image {
+    border-radius: 8px 8px 0 0 !important;
+    overflow: hidden !important;
+}
+
+.luxury-post-grid .box-text,
+.blog-archive .box-text {
+    padding: 18px 18px 20px 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    text-align: left !important;
+}
+
+.luxury-post-grid .post-title,
+.blog-archive .post-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.45 !important;
+    color: #0b2246 !important;
+    margin-bottom: 10px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    min-height: 46px !important;
+}
+
+.luxury-post-grid .post-title a:hover,
+.blog-archive .post-title a:hover {
+    color: #d4af37 !important;
+}
+
+.luxury-post-grid .from-the-blog-excerpt,
+.blog-archive .from-the-blog-excerpt {
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+    color: #64748b !important;
+    margin-bottom: 14px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    flex-grow: 1 !important;
+}
+
+.luxury-post-grid a.more-link,
+.blog-archive a.more-link {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #d4af37 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    transition: all 0.2s ease !important;
+    margin-top: auto !important;
+}
+
+.luxury-post-grid a.more-link:hover,
+.blog-archive a.more-link:hover {
+    color: #0b2246 !important;
+    transform: translateX(4px) !important;
+}
+
+
+/* ========================================================
+   THANH MENU PHỤ CỐ ĐỊNH CHUẨN DỰ ÁN (STICKY SUBNAV - KENHBATDONGSAN.VN)
+   ======================================================== */
+html {
+    scroll-behavior: smooth !important;
+}
+
+.kbds-project-subnav {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 70px !important;
+    z-index: 999 !important;
+    background: #0b2246 !important;
+    border-bottom: 2px solid #d4af37 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+body.admin-bar .kbds-project-subnav {
+    top: 102px !important;
+}
+
+.kbds-project-subnav .kbds-container {
+    max-width: 1240px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 20px !important;
+    gap: 15px !important;
+}
+
+.kbds-subnav-brand {
+    font-weight: 800 !important;
+    font-size: 14.5px !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    order: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+.kbds-subnav-dot {
+    display: inline-block !important;
+    width: 9px !important;
+    height: 9px !important;
+    background: #d4af37 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 8px #d4af37 !important;
+}
+
+.kbds-subnav-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    white-space: nowrap !important;
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    order: 2 !important;
+    overflow: visible !important;
+}
+
+.kbds-subnav-links::-webkit-scrollbar {
+    display: none !important;
+}
+
+.kbds-subnav-link {
+    color: #e2e8f0 !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    padding: 8px 14px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+.kbds-subnav-link:hover,
+.kbds-subnav-link:focus,
+.kbds-subnav-link.active {
+    color: #d4af37 !important;
+    background: rgba(212, 175, 55, 0.15) !important;
+    border-bottom: 2px solid #d4af37 !important;
+}
+
+.kbds-subnav-cta {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%) !important;
+    color: #0b2246 !important;
+    padding: 9px 20px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35) !important;
+    transition: all 0.2s ease !important;
+    order: 3 !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+}
+
+.kbds-subnav-cta:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5) !important;
+    color: #ffffff !important;
+}
+
+/* Offset cuộn chuẩn để không bị đè bởi sticky header/subnav */
+section[id], div[id], h2[id], h3[id],
+#tong-quan, #vi-tri, #quy-hoach, #san-pham, #tien-ich, #chinh-sach, #tien-do, #hoi-dap, #tin-tuc-du-an, #dang-ky, #nhan-bang-gia, #mat-bang, #can-ho-dual-key {
+    scroll-margin-top: 140px !important;
+}
+
+@media (max-width: 820px) {
+    .kbds-subnav-brand {
+        display: none !important;
+    }
+    .kbds-project-subnav {
+        top: 60px !important;
+    }
+    .kbds-project-subnav .kbds-container {
+        padding: 6px 10px !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+    }
+    .kbds-subnav-links {
+        justify-content: flex-start !important;
+        gap: 6px !important;
+        order: 1 !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+    }
+    .kbds-subnav-link {
+        font-size: 12px !important;
+        padding: 6px 9px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    .kbds-subnav-cta {
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+        order: 2 !important;
+        margin-left: auto !important;
+    }
+    section[id], div[id], h2[id], h3[id] {
+        scroll-margin-top: 110px !important;
+    }
+}
+
+
+/* Loại bỏ thẻ br/p do WordPress tự động thêm vào thanh Subnav */
+.kbds-project-subnav br,
+.kbds-subnav-links br,
+.kbds-subnav-brand br,
+.kbds-container br {
+    display: none !important;
+}
+
+.kbds-project-subnav p {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: contents !important;
+    order: 3 !important;
+    margin-left: auto !important;
+}
+
+
+/* =========================================================================
+   KBDS GLOBAL CONTAINER & RESPONSIVE MOBILE STYLES FOR PROJECT PAGES
+   ========================================================================= */
+
+/* 1. Global Container: Giới hạn độ rộng chuẩn 1240px, canh giữa, không bị tràn màn hình */
+.kbds-container,
+.single-du_an .kbds-container {
+    max-width: 1240px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+/* 2. Đảm bảo toàn bộ bảng (Tables) không bị tràn ngang, có thanh cuộn mượt mà trên mobile */
+.single-du_an table {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+.single-du_an table th,
+.single-du_an table td {
+    word-break: normal !important;
+}
+
+/* Bọc thanh cuộn ngang tự động cho các bảng lớn */
+@media (max-width: 1024px) {
+    .single-du_an table {
+        display: block !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* 3. Đảm bảo ảnh luôn co giãn 100% không bao giờ làm vỡ khung */
+.single-du_an img,
+.single-du_an figure img {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* 4. Tối ưu hiển thị Mobile (< 820px) */
+@media (max-width: 820px) {
+    .kbds-container,
+    .single-du_an .kbds-container {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    /* Chuyển toàn bộ các layout chia cột inline css sang 1 cột xếp chồng */
+    .single-du_an [style*="grid-template-columns:1.15fr 0.85fr"],
+    .single-du_an [style*="grid-template-columns: 1.15fr 0.85fr"],
+    .single-du_an [style*="grid-template-columns:1.1fr 0.9fr"],
+    .single-du_an [style*="grid-template-columns: 1.1fr 0.9fr"],
+    .single-du_an [style*="grid-template-columns:1.2fr 0.8fr"],
+    .single-du_an [style*="grid-template-columns: 1.2fr 0.8fr"],
+    .single-du_an [style*="grid-template-columns:1fr 1fr"],
+    .single-du_an [style*="grid-template-columns: 1fr 1fr"],
+    .single-du_an [style*="grid-template-columns:1fr 1.2fr"],
+    .single-du_an [style*="grid-template-columns: 1fr 1.2fr"],
+    .single-du_an [style*="grid-template-columns:repeat(2,1fr)"],
+    .single-du_an [style*="grid-template-columns: repeat(2, 1fr)"],
+    .single-du_an .kbds-2col-grid,
+    .single-du_an .kbds-hero-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    /* Hero Banner trên di động */
+    .single-du_an section:first-of-type,
+    .single-du_an .kbds-project-hero {
+        padding: 30px 0 40px !important;
+    }
+
+    .single-du_an h1,
+    .single-du_an h1[style*="font-size:42px"],
+    .single-du_an h1[style*="font-size:38px"] {
+        font-size: 24px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 12px !important;
+    }
+
+    .single-du_an h1 span,
+    .single-du_an h1 span[style*="font-size:22px"] {
+        font-size: 15px !important;
+        line-height: 1.4 !important;
+        margin-top: 6px !important;
+    }
+
+    .single-du_an h2,
+    .single-du_an h2[style*="font-size:32px"],
+    .single-du_an h2[style*="font-size:30px"],
+    .single-du_an h2[style*="font-size:28px"] {
+        font-size: 21px !important;
+        line-height: 1.35 !important;
+        margin-bottom: 14px !important;
+    }
+
+    /* Form đăng ký nhận báo giá dạng 1 cột trên mobile */
+    .kbds-lead-box form,
+    .single-du_an form[style*="grid-template-columns"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .kbds-lead-box form input,
+    .kbds-lead-box form button,
+    .single-du_an form input,
+    .single-du_an form button {
+        width: 100% !important;
+    }
+
+    /* Khối thống kê stats 3 ô trong hero */
+    .single-du_an [style*="grid-template-columns:repeat(3,1fr)"],
+    .single-du_an [style*="grid-template-columns: repeat(3, 1fr)"] {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        gap: 8px !important;
+    }
+
+    .single-du_an [style*="grid-template-columns:repeat(3,1fr)"] > div,
+    .single-du_an [style*="grid-template-columns: repeat(3, 1fr)"] > div {
+        padding: 10px 6px !important;
+    }
+
+    .single-du_an [style*="grid-template-columns:repeat(3,1fr)"] [style*="font-size:20px"],
+    .single-du_an [style*="grid-template-columns: repeat(3, 1fr)"] [style*="font-size:20px"] {
+        font-size: 15px !important;
+    }
+}
+
+/* =========================================================================
+   LUXURY REAL ESTATE TYPOGRAPHY SYSTEM (CHUẨN FORM PLAYFAIR & PLUS JAKARTA SANS)
+   ========================================================================= */
+
+/* 1. BODY & NỘI DUNG TOÀN TRANG (PLUS JAKARTA SANS 400 - 500, SIZE 15.5px) */
+body, 
+p, 
+li, 
+td, 
+th, 
+input, 
+textarea, 
+select,
+.entry-content, 
+.entry-summary, 
+.from_the_blog_excerpt,
+.blog-post-inner p {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 15.5px !important;
+    line-height: 1.72 !important;
+    color: #334155;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 2. LOGO & TIÊU ĐỀ LỚN H1, H2 (PLAYFAIR DISPLAY 700 - BOLD, IN HOA NHẸ) */
+h1, 
+h2, 
+.entry-title, 
+.page-title, 
+.section-title, 
+.section-title b,
+.hero-title, 
+.single-du_an h1, 
+.single-du_an h2,
+#logo a,
+.site-title {
+    font-family: 'Playfair Display', Georgia, "Times New Roman", serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.35px !important;
+    color: #0F172A;
+}
+
+/* Tiêu đề H1 Hero Banner */
+.single-du_an h1,
+.single-du_an h1[style*="font-size:38px"],
+.single-du_an h1[style*="font-size:42px"] {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Subtitle vàng kim dưới H1 */
+.single-du_an h1 span,
+.single-du_an h1 span[style*="font-size:20px"],
+.single-du_an h1 span[style*="font-size:22px"] {
+    font-family: 'Plus Jakarta Sans', 'Montserrat', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+}
+
+/* Tiêu đề H3, H4, H5, H6 (Plus Jakarta Sans Semi-bold / Bold) */
+h3, 
+h4, 
+h5, 
+h6,
+.post-title,
+.box-text h5 {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 700 !important;
+    color: #0F172A;
+    line-height: 1.45 !important;
+}
+
+/* =========================================================================
+   DARK BACKGROUND CONTRAST SYSTEM (NỔI BẬT CHỮ TRẮNG & VÀNG TRÊN NỀN TỐI)
+   ========================================================================= */
+.single-du_an section[style*="#0F172A"],
+.single-du_an section[style*="#0f172a"],
+.single-du_an section[style*="#0a192f"],
+.single-du_an section[style*="#0A192F"],
+.single-du_an section[style*="#112240"],
+.single-du_an section[style*="#001d3f"],
+.single-du_an section[style*="#24140D"],
+.single-du_an section[style*="linear-gradient"],
+.single-du_an #ham-sieu-xe,
+.single-du_an #dang-ky,
+.single-du_an .kbds-project-hero,
+.kbds-lead-box {
+    color: #FFFFFF !important;
+}
+
+.single-du_an section[style*="#0F172A"] h1,
+.single-du_an section[style*="#0F172A"] h2,
+.single-du_an section[style*="#0F172A"] h3,
+.single-du_an section[style*="#0a192f"] h1,
+.single-du_an section[style*="#0a192f"] h2,
+.single-du_an section[style*="#0a192f"] h3,
+.single-du_an section[style*="linear-gradient"] h1,
+.single-du_an section[style*="linear-gradient"] h2,
+.single-du_an section[style*="linear-gradient"] h3,
+.single-du_an #ham-sieu-xe h2,
+.single-du_an #ham-sieu-xe h3,
+.single-du_an #dang-ky h2,
+.single-du_an #dang-ky h3 {
+    color: #FFFFFF !important;
+}
+
+.single-du_an section[style*="#0F172A"] p,
+.single-du_an section[style*="#0F172A"] li,
+.single-du_an section[style*="#0a192f"] p,
+.single-du_an section[style*="#0a192f"] li,
+.single-du_an section[style*="linear-gradient"] p,
+.single-du_an section[style*="linear-gradient"] li,
+.single-du_an #ham-sieu-xe p,
+.single-du_an #ham-sieu-xe li,
+.single-du_an #dang-ky p,
+.kbds-lead-box p {
+    color: #E2E8F0 !important;
+}
+
+.single-du_an section[style*="#0F172A"] strong,
+.single-du_an section[style*="#0a192f"] strong,
+.single-du_an section[style*="linear-gradient"] strong,
+.single-du_an #ham-sieu-xe strong,
+.kbds-lead-box strong {
+    color: #FFFFFF !important;
+}
+
+.single-du_an #ham-sieu-xe [style*="color:#38BDF8"] {
+    color: #38BDF8 !important;
+}
+
+.single-du_an #ham-sieu-xe [style*="color:#FDE68A"],
+.single-du_an #ham-sieu-xe [style*="color:#94A3B8"] {
+    color: #CBD5E1 !important;
+}
+
+.kbds-lead-box h3,
+.single-du_an #dang-ky span[style*="color:#F59E0B"] {
+    color: #FBBF24 !important;
+}
+
+.kbds-lead-box input,
+.kbds-lead-box select,
+.kbds-lead-box textarea {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+}
+
+/* 3. MENU & NÚT BẤM BUTTONS (PLUS JAKARTA SANS / MONTSERRAT 600 - 700) */
+.header-nav, 
+.header-nav > li > a, 
+.nav, 
+.nav > li > a,
+.kbds-project-subnav, 
+.kbds-subnav-links, 
+.kbds-subnav-link,
+.kbds-subnav-brand, 
+.kbds-subnav-cta,
+button, 
+.button, 
+input[type="submit"], 
+input[type="button"],
+.btn, 
+.kbds-btn, 
+a.button, 
+a.kbds-subnav-cta,
+.kbds-lead-box button {
+    font-family: 'Plus Jakarta Sans', 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.2px !important;
+}
+
+/* 4. GIÁ TIỀN / DIỆN TÍCH / MÃ CĂN / SỐ LIỆU STATS (HIỂN THỊ TO, RÕ RÀNG) */
+.single-du_an [style*="color:#F59E0B"],
+.single-du_an [style*="color:#B45309"],
+.single-du_an [style*="color:#D97706"],
+.single-du_an [style*="color: #F59E0B"],
+.single-du_an [style*="color: #B45309"],
+.single-du_an [style*="color: #D97706"],
+.price, 
+.amount, 
+.kbds-price,
+#kbds_res_equity, 
+#kbds_res_loan, 
+#kbds_res_monthly,
+.single-du_an td:nth-child(3),
+.single-du_an [style*="font-size:20px"][style*="color:#F59E0B"] {
+    font-family: 'Plus Jakarta Sans', 'Montserrat', sans-serif !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.2px !important;
+}
+
+/* Thẻ Badge & Tag chuyên mục */
+.kbds-lala-badge,
+[style*="letter-spacing:1px"],
+.cat-label {
+    font-family: 'Plus Jakarta Sans', 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+}
+
+/* =========================================================================
+   HEADER & LOGO AVATAR & NAVIGATION CUSTOMIZATION
+   ========================================================================= */
+
+/* 1. NỀN HEADER CHUẨN SUNSHINE GROUP & HIỆU ỨNG CHUYỂN MÀU KHI CUỘN TRANG */
+#header,
+.header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+#header,
+.header-main,
+.header-wrapper {
+    background-color: rgba(0, 0, 0, 0.31) !important;
+    background: rgba(0, 0, 0, 0.31) !important;
+    transition: background-color 0.35s ease, box-shadow 0.35s ease, height 0.35s ease !important;
+}
+
+#masthead {
+    background: transparent !important;
+}
+
+.header-bg-color {
+    background-color: rgba(0, 0, 0, 0.31) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition: background-color 0.35s ease !important;
+}
+
+/* HIỆU ỨNG CHUYỂN MÀU KHI CUỘN TRANG (STICKY STUCK HEADER):
+   Tự động cuộn theo dính đỉnh màn hình, chuyển sang nền Navy đậm sang trọng, đổ bóng cao cấp */
+.header-wrapper.stuck,
+.stuck.header-wrapper {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 99999 !important;
+    background-color: rgba(11, 34, 70, 0.97) !important;
+    background: rgba(11, 34, 70, 0.97) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.35) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+body.admin-bar .header-wrapper.stuck,
+body.admin-bar .stuck.header-wrapper {
+    top: 32px !important;
+}
+
+@media (max-width: 782px) {
+    body.admin-bar .header-wrapper.stuck,
+    body.admin-bar .stuck.header-wrapper {
+        top: 46px !important;
+    }
+}
+
+.stuck .header-main {
+    height: 70px !important;
+    min-height: 70px !important;
+}
+
+.stuck #logo img {
+    max-height: 48px !important;
+    height: 48px !important;
+    width: 48px !important;
+    min-height: 48px !important;
+    min-width: 48px !important;
+}
+
+/* Ẩn top-bar placeholder */
+#top-bar {
+    display: none !important;
+}
+
+/* 2. Logo Avatar chuyên viên / CĐT: Nổi bật, tròn trịa, viền kim sang trọng */
+#logo {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    height: 100% !important;
+}
+
+#logo a {
+    display: flex !important;
+    align-items: center !important;
+}
+
+#logo img {
+    max-height: 54px !important;
+    height: 54px !important;
+    width: 54px !important;
+    min-width: 54px !important;
+    min-height: 54px !important;
+    border-radius: 50% !important;
+    border: 2px solid #D4AF37 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+    background: #FFFFFF !important;
+    object-fit: cover !important;
+    object-position: center 15% !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    margin: 0 !important;
+}
+
+/* Chỉ hiển thị duy nhất 1 ảnh logo avatar đầu tiên, triệt tiêu ảnh trùng lặp */
+#logo a img:not(:first-child) {
+    display: none !important;
+}
+
+#logo a img:first-child {
+    display: block !important;
+}
+
+#logo a:hover img {
+    transform: scale(1.06) !important;
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.5) !important;
+}
+
+/* 3. Menu chính bên phải: Màu vàng kim chuẩn Sunshine (#fcfc73), cân đối, sắc nét */
+.header-nav-main {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+}
+
+.header-nav-main > li > a {
+    font-family: 'Plus Jakarta Sans', 'Montserrat', 'Roboto Condensed', sans-serif !important;
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.35px !important;
+    color: #fcfc73 !important; /* Vàng kim chuẩn Website Sunshine Group */
+    padding: 12px 14px !important;
+    text-transform: uppercase !important;
+    transition: color 0.25s ease, text-shadow 0.25s ease !important;
+}
+
+.header-nav-main > li > a:hover {
+    color: #FFFFFF !important;
+    text-shadow: 0 0 10px rgba(252, 252, 115, 0.7) !important;
+}
+
+.header-nav-main > li.active > a,
+.header-nav-main > li.current-menu-item > a,
+.header-nav-main > li.current_page_item > a {
+    color: #fcfc73 !important;
+    border-bottom: 2px solid #D4AF37 !important;
+}
+
+/* 4. Dropdown Menu con: Đẹp mắt tông Navy sang trọng, bo góc, viền vàng */
+.nav-dropdown,
+.sub-menu {
+    border-radius: 10px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    padding: 8px 0 !important;
+    background: #0B2246 !important;
+}
+
+.nav-dropdown > li > a,
+.sub-menu > li > a {
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    color: #F8FAFC !important;
+    padding: 10px 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.nav-dropdown > li > a:hover,
+.sub-menu > li > a:hover {
+    color: #fcfc73 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    padding-left: 22px !important;
+}
+
+/* 5. Ẩn hoàn toàn nút Search trên thanh Menu */
+.header-nav .header-search,
+.header-search,
+.header-search-form,
+li.header-search,
+.header-nav-main .header-search,
+.search-popup,
+.header-search-icon {
+    display: none !important;
+}
+
+/* =========================================================================
+   LƯỚI TIN TỨC DỰ ÁN 2 HÀNG X 4 CỘT = 8 BÀI VIẾT GỌN GÀNG, ĐẸP MẮT
+   ========================================================================= */
+.kbds-project-news-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 20px !important;
+}
+
+.kbds-news-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.kbds-news-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 24px rgba(11, 34, 70, 0.12) !important;
+    border-color: #CBD5E1 !important;
+}
+
+@media (max-width: 1024px) {
+    .kbds-project-news-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .kbds-project-news-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+}
+
+
+/* =========================================================================
+   1. ẨN HOÀN TOÀN THANH TOP MENU (#top-bar, .header-top)
+   ========================================================================= */
+#top-bar,
+.header-top,
+.top-bar-nav,
+.header-top-nav,
+div#top-bar,
+.hide-for-sticky {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+}
+
+/* =========================================================================
+   2. BỀ NGANG WEBSITE RỘNG CHUẨN HIỆN ĐẠI (1340PX - TỐI ƯU DISPLAY MỚI NHẤT)
+   ========================================================================= */
+.container,
+.container-width,
+.full-width .ubermenu-nav,
+.row,
+.row.row-collapse,
+.row.row-small,
+.row.row-large,
+.kbds-container,
+.single-du_an .kbds-container,
+.kbds-project-subnav .kbds-container {
+    max-width: 1340px !important;
+    width: 100% !important;
+}
+
+body .row {
+    max-width: 1340px !important;
+}
+
+/* =========================================================================
+   3. GIAO DIỆN CARD DỰ ÁN CHUẨN ĐẸP CAO CẤP (KENHBATDONGSAN.VN)
+   ========================================================================= */
+:root {
+    --kbds-navy: #0B2C4D;
+    --kbds-navy-light: #164675;
+    --kbds-gold: #C59B27;
+    --kbds-gold-hover: #B0871B;
+    --kbds-gold-soft: #FBF6E9;
+    --kbds-text-main: #1E293B;
+    --kbds-text-muted: #64748B;
+    --kbds-border: #E2E8F0;
+    --kbds-radius: 14px;
+    --kbds-shadow-sm: 0 4px 16px rgba(11, 44, 77, 0.06);
+    --kbds-shadow-md: 0 12px 30px rgba(11, 44, 77, 0.12);
+}
+
+.kbds-grid-4,
+.kbds-home-projects-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 24px !important;
+    margin: 24px 0 35px 0 !important;
+}
+
+.kbds-grid-3 {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 26px !important;
+    margin: 24px 0 35px 0 !important;
+}
+
+.kbds-card,
+.kbds-project-card {
+    background: #FFFFFF !important;
+    border: 1px solid var(--kbds-border) !important;
+    border-radius: var(--kbds-radius) !important;
+    overflow: hidden !important;
+    box-shadow: var(--kbds-shadow-sm) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    position: relative !important;
+}
+
+.kbds-card:hover,
+.kbds-project-card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: var(--kbds-shadow-md) !important;
+    border-color: rgba(197, 155, 39, 0.45) !important;
+}
+
+.kbds-card-media {
+    position: relative !important;
+    height: 205px !important;
+    overflow: hidden !important;
+    background: #F1F5F9 !important;
+}
+
+.kbds-card-media a {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.kbds-card-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.45s ease !important;
+    display: block !important;
+}
+
+.kbds-card:hover .kbds-card-media img {
+    transform: scale(1.06) !important;
+}
+
+.kbds-badge-status {
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    background: rgba(11, 44, 77, 0.92) !important;
+    color: #FFFFFF !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    z-index: 2 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+.kbds-card-body {
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    background: #FFFFFF !important;
+}
+
+.kbds-card-meta-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 8px !important;
+    font-size: 12px !important;
+}
+
+.kbds-developer-tag {
+    color: var(--kbds-gold-hover) !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    text-decoration: none !important;
+}
+
+.kbds-card-title {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-size: 16.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+    margin: 0 0 8px 0 !important;
+    min-height: 46px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.kbds-card-title a {
+    color: var(--kbds-navy) !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease !important;
+}
+
+.kbds-card-title a:hover {
+    color: var(--kbds-gold-hover) !important;
+}
+
+.kbds-card-location {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-size: 13px !important;
+    color: var(--kbds-text-muted) !important;
+    margin: 0 0 14px 0 !important;
+    min-height: 38px !important;
+    line-height: 1.45 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.kbds-card-footer {
+    margin-top: auto !important;
+    padding-top: 14px !important;
+    border-top: 1px solid #F1F5F9 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.kbds-price-block {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.kbds-price-label {
+    display: block !important;
+    font-size: 11px !important;
+    color: var(--kbds-text-muted) !important;
+    text-transform: uppercase !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+}
+
+.kbds-price-value {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: var(--kbds-navy) !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.kbds-btn-card {
+    padding: 7px 14px !important;
+    border-radius: 6px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    background: #F8FAFC !important;
+    color: var(--kbds-navy) !important;
+    border: 1px solid #CBD5E1 !important;
+    transition: all 0.25s ease !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+}
+
+.kbds-btn-card:hover {
+    background: var(--kbds-navy) !important;
+    color: #FFFFFF !important;
+    border-color: var(--kbds-navy) !important;
+    transform: translateX(2px) !important;
+}
+
+/* Header Section đẹp như kenhbatdongsan */
+.kbds-sec-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    margin-bottom: 24px !important;
+    gap: 20px !important;
+    flex-wrap: wrap !important;
+}
+
+.kbds-sec-tag {
+    display: inline-block !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.2px !important;
+    text-transform: uppercase !important;
+    color: var(--kbds-gold) !important;
+    background: var(--kbds-gold-soft) !important;
+    padding: 5px 12px !important;
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+    border: 1px solid rgba(197, 155, 39, 0.25) !important;
+}
+
+.kbds-sec-title {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: var(--kbds-navy) !important;
+    margin: 0 0 6px 0 !important;
+    line-height: 1.3 !important;
+}
+
+.kbds-sec-desc {
+    font-size: 15px !important;
+    color: var(--kbds-text-muted) !important;
+    margin: 0 !important;
+    max-width: 760px !important;
+    line-height: 1.6 !important;
+}
+
+.kbds-btn-outline {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--kbds-navy) !important;
+    background: #FFFFFF !important;
+    border: 1.5px solid var(--kbds-navy) !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    transition: all 0.25s ease !important;
+    white-space: nowrap !important;
+}
+
+.kbds-btn-outline:hover {
+    background: var(--kbds-navy) !important;
+    color: #FFFFFF !important;
+}
+
+/* Responsive cho Grid Cards */
+@media (max-width: 1024px) {
+    .kbds-grid-4,
+    .kbds-home-projects-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 18px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .kbds-grid-4,
+    .kbds-home-projects-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+}

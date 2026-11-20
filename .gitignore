@@ -1,0 +1,18 @@
+# WordPress Core & Config
+config-live-sync.php
+*.log
+*.tmp
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/cache/
+wp-content/backup-db/
+sitemap.xml
+robots.txt
+
+# Database dumps and archives (prevent secrets leakage & large files)
+*.sql
+*.zip
+*.tar.gz
+*.bak
+database-export-for-live.sql
+sunshine-update-package.zip

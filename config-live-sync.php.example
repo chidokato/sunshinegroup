@@ -1,0 +1,10 @@
+<?php
+/**
+ * CẤU HÌNH ĐỒNG BỘ BÀI VIẾT LÊN WEBSITE LIVE (https://sunshine-group.com.vn)
+ * Đổi tên file này thành config-live-sync.php và điền thông tin bên dưới:
+ */
+return [
+    'live_url'     => 'https://sunshine-group.com.vn',
+    'username'     => 'admin', // Tên đăng nhập admin trên website live
+    'app_password' => 'xxxx xxxx xxxx xxxx xxxx xxxx', // Mật khẩu ứng dụng (Application Password) tạo trong Hồ sơ
+];
