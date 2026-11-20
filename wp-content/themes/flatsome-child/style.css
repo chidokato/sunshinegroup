@@ -1171,11 +1171,11 @@ body.admin-bar .stuck.header-wrapper {
 
 .header-nav-main > li > a {
     font-family: 'Plus Jakarta Sans', 'Montserrat', 'Roboto Condensed', sans-serif !important;
-    font-size: 13px !important;
+    font-size: 12.5px !important;
     font-weight: 700 !important;
-    letter-spacing: 0.2px !important;
+    letter-spacing: 0.15px !important;
     color: #fcfc73 !important; /* Vàng kim chuẩn Website Sunshine Group */
-    padding: 10px 7px !important;
+    padding: 8px 5px !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
     transition: color 0.25s ease, text-shadow 0.25s ease !important;
