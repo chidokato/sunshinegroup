@@ -1836,68 +1836,99 @@ class Sunshine_Project_Manager {
         ?>
         <div class="sunshine-luxury-footer">
             <div class="sunshine-footer-container">
-                <div class="sunshine-footer-grid">
-                    <!-- CỘT 1: THƯƠNG HIỆU -->
-                    <div>
-                        <div class="sunshine-footer-brand">
-                            <img src="<?php echo esc_url( $logo_url ); ?>" alt="Tập đoàn Sunshine - Sunshine Group" class="sunshine-footer-logo" width="56" height="56" />
+                <!-- TOP BAR: LOGO & 3 HỘP THÔNG TIN NHANH -->
+                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:20px;padding-bottom:32px;margin-bottom:36px;border-bottom:1px solid rgba(255,255,255,0.1)">
+                    <div class="sunshine-footer-brand" style="margin-bottom:0 !important">
+                        <img src="<?php echo esc_url( $logo_url ); ?>" alt="Tập đoàn Sunshine - BĐS Indochine" class="sunshine-footer-logo" width="58" height="58" />
+                        <div>
+                            <h3 class="sunshine-footer-brand-title">Tập Đoàn Sunshine • Indochine</h3>
+                            <span class="sunshine-footer-brand-sub">Cổng Thông Tin Dự Án, Quy Hoạch &amp; Giỏ Hàng F1</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:14px">
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px">
+                            <span style="font-size:18px">📞</span>
                             <div>
-                                <h3 class="sunshine-footer-brand-title">Tập Đoàn Sunshine</h3>
-                                <span class="sunshine-footer-brand-sub">Sunshine Group • Smart Living 4.0</span>
+                                <div style="font-size:11.5px;color:#94a3b8;line-height:1.2">Hotline 24/7</div>
+                                <a href="tel:0942655111" style="color:#fbbf24;font-weight:800;font-size:15px;text-decoration:none">0942.655.111</a>
                             </div>
                         </div>
-                        <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0 0 16px;">
-                            Hệ thống thông tin dự án, phân tích quy hoạch chuyên sâu và cập nhật bảng giá gốc các dự án bất động sản hạng sang: Căn hộ Smart Home, Sky Villas, Biệt thự sinh thái &amp; Shophouse thương mại.
-                        </p>
-                        <div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);border-radius:10px;padding:10px 14px;font-size:12.5px;color:#fbbf24;font-weight:700;">
-                            ✔ Hồ sơ pháp lý 1/500 • Bảng giá gốc CĐT • Hỗ trợ 24/7
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px">
+                            <span style="font-size:18px">🏢</span>
+                            <div>
+                                <div style="font-size:11.5px;color:#94a3b8;line-height:1.2">Hệ thống văn phòng</div>
+                                <strong style="color:#fbbf24;font-weight:800;font-size:14.5px">Hà Nội &amp; TP.HCM</strong>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px">
+                            <span style="font-size:18px">✉️</span>
+                            <div>
+                                <div style="font-size:11.5px;color:#94a3b8;line-height:1.2">Chăm sóc khách hàng</div>
+                                <a href="mailto:luumui91@gmail.com" style="color:#fbbf24;font-weight:800;font-size:14.5px;text-decoration:none">luumui91@gmail.com</a>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- CỘT 2: DỰ ÁN TRỌNG ĐIỂM -->
+                <!-- 4 CỘT CHÍNH -->
+                <div class="sunshine-footer-grid">
+                    <!-- CỘT 1: CÔNG TY CỔ PHẦN BẤT ĐỘNG SẢN INDOCHINE -->
                     <div>
-                        <h4 class="sunshine-footer-heading">Dự Án Trọng Điểm</h4>
-                        <ul class="sunshine-footer-list">
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/handico-sunshine-new-ha-noi/' ) ); ?>">Dự Án Handico Sunshine New Hà Nội</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/hinode-solera-pham-hung/' ) ); ?>">Dự Án Hinode Solera Phạm Hùng</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/noble-west-lake-ha-noi/' ) ); ?>">Noble West Lake Hà Nội</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/lalalay-residences-bac-an-khanh/' ) ); ?>">Lalalay Residences Bắc An Khánh</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/the-president-park-ha-noi/' ) ); ?>">The President Park Mễ Trì</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an/vinhomes-king-park-bac-ninh/' ) ); ?>">Vinhomes King Park Bắc Ninh</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- CỘT 3: CHUYÊN MỤC & TIN TỨC -->
-                    <div>
-                        <h4 class="sunshine-footer-heading">Chuyên Mục BĐS</h4>
-                        <ul class="sunshine-footer-list">
-                            <li><a href="<?php echo esc_url( home_url( '/du-an-phat-trien-boi-sunshine/' ) ); ?>">Dự Án Phát Triển Bởi Sunshine</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/du-an-lien-ket-phat-trien/' ) ); ?>">Dự Án Liên Kết &amp; Phát Triển</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/danh-gia-du-an/' ) ); ?>">Phân Tích &amp; Đánh Giá Dự Án</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/tin-tap-doan-sunshine/' ) ); ?>">Tin Tập Đoàn Sunshine</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/tin-thi-truong-bds/' ) ); ?>">Tin Thị Trường BĐS</a></li>
-                            <li><a href="<?php echo esc_url( home_url( '/cam-nang-phap-ly/' ) ); ?>">Cẩm Nang &amp; Pháp Lý</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- CỘT 4: THÔNG TIN LIÊN HỆ -->
-                    <div>
-                        <h4 class="sunshine-footer-heading">Thông Tin Liên Hệ</h4>
+                        <h4 class="sunshine-footer-heading">Công Ty Cổ Phần Bất Động Sản Indochine</h4>
                         <div class="sunshine-footer-contact-item">
                             <span>📍</span>
-                            <div><strong>Địa chỉ:</strong> Tòa nhà Sunshine Center, Số 16 Phạm Hùng, Q. Nam Từ Liêm, TP. Hà Nội</div>
+                            <div><strong>Trụ sở TP.HCM:</strong> Số 45 Thạch Thị Thanh, Phường Tân Định, TP. Hồ Chí Minh, Việt Nam.</div>
+                        </div>
+                        <div class="sunshine-footer-contact-item">
+                            <span>📍</span>
+                            <div><strong>Trụ sở Hà Nội:</strong> Tầng 2 tòa nhà Capital Elite, Số 18 Phạm Hùng, Phường Mỹ Đình, Nam Từ Liêm, Hà Nội &amp; Tầng 1 CT4 Vimeco Nguyễn Chánh, Yên Hòa, Hà Nội.</div>
                         </div>
                         <div class="sunshine-footer-contact-item">
                             <span>📞</span>
-                            <div><strong>Hotline / Zalo 24/7:</strong> <a href="tel:0968339328">0968.339.328</a></div>
+                            <div><a href="tel:0942655111" style="color:#ffffff">0942.655.111</a> – <a href="mailto:luumui91@gmail.com" style="color:#ffffff">luumui91@gmail.com</a></div>
                         </div>
-                        <div class="sunshine-footer-contact-item">
-                            <span>🌐</span>
-                            <div><strong>Website:</strong> <a href="<?php echo esc_url( home_url( '/' ) ); ?>">sunshine-group.com.vn</a></div>
+                    </div>
+
+                    <!-- CỘT 2: HƯỚNG DẪN & DỊCH VỤ -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Hướng Dẫn &amp; Dịch Vụ</h4>
+                        <ul class="sunshine-footer-list">
+                            <li><a href="<?php echo esc_url( home_url( '/gioi-thieu/' ) ); ?>">Về chúng tôi</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/lien-he/' ) ); ?>">Liên hệ &amp; Văn phòng</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/bao-gia-va-tu-van-du-an/' ) ); ?>">Báo giá và tư vấn dự án</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/cam-nang-phap-ly/' ) ); ?>">Cẩm nang đầu tư &amp; Pháp lý</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/sitemap_index.xml' ) ); ?>">Sơ đồ website (Sitemap)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- CỘT 3: QUY ĐỊNH & PHÁP LÝ -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Quy Định &amp; Pháp Lý</h4>
+                        <ul class="sunshine-footer-list">
+                            <li><a href="<?php echo esc_url( home_url( '/chinh-sach-bao-mat/' ) ); ?>">Chính sách bảo mật</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/dieu-khoan-su-dung/' ) ); ?>">Điều khoản sử dụng</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/tuyen-bo-mien-tru/' ) ); ?>">Tuyên bố miễn trừ</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/quy-che-hoat-dong-san/' ) ); ?>">Quy chế hoạt động sàn</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/che-tai-xu-ly-vi-pham/' ) ); ?>">Chế tài xử lý vi phạm</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/giai-quyet-khieu-nai/' ) ); ?>">Giải quyết khiếu nại</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- CỘT 4: QUỐC GIA & NGÔN NGỮ / DỰ ÁN TIÊU BIỂU -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Quốc Gia &amp; Ngôn Ngữ</h4>
+                        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);border-radius:10px;padding:10px 16px;color:#ffffff;font-weight:700;font-size:13.5px;margin-bottom:14px">
+                            🌐 Việt Nam (Tiếng Việt)
                         </div>
-                        <div class="sunshine-footer-contact-item">
-                            <span>🕒</span>
-                            <div><strong>Giờ làm việc:</strong> 08:00 – 21:00 (Tất cả các ngày trong tuần)</div>
+                        <p style="color:#94a3b8;font-size:13.5px;line-height:1.65;margin:0 0 14px">
+                            Cổng thông tin dự án, quy hoạch &amp; thẩm định bất động sản cao cấp hàng đầu Việt Nam.
+                        </p>
+                        <div style="font-size:12.5px;color:#cbd5e1;line-height:1.7">
+                            <strong style="color:#fbbf24">Dự án tiêu biểu:</strong>
+                            <a href="<?php echo esc_url( home_url( '/du-an/handico-sunshine-new-ha-noi/' ) ); ?>" style="color:#cbd5e1;text-decoration:underline">Handico Sunshine New Hà Nội</a> •
+                            <a href="<?php echo esc_url( home_url( '/du-an/hinode-solera-pham-hung/' ) ); ?>" style="color:#cbd5e1;text-decoration:underline">Hinode Solera Phạm Hùng</a> •
+                            <a href="<?php echo esc_url( home_url( '/du-an/noble-west-lake-ha-noi/' ) ); ?>" style="color:#cbd5e1;text-decoration:underline">Noble West Lake</a>
                         </div>
                     </div>
                 </div>

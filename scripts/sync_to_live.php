@@ -41,7 +41,8 @@ class SunshineLiveSync {
     }
 
     public function request( $endpoint, $method = 'GET', $data = null, $headers = [] ) {
-        $url = $this->live_url . '/wp-json' . $endpoint;
+        $endpoint = preg_replace( '/\?/', '&', $endpoint, 1 );
+        $url = $this->live_url . '/index.php?rest_route=' . $endpoint;
 
         $default_headers = [
             'User-Agent' => 'Sunshine-Localhost-Sync/1.0',
