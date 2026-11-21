@@ -31,6 +31,12 @@ class Sunshine_Project_Manager {
         // Nạp toàn bộ CSS giao diện Sunshine chuẩn (Header, Logo, Grid 4 cột, 1340px)
         add_action( 'wp_head', [ __CLASS__, 'output_sunshine_styles' ], 99 );
 
+        // Chân trang Luxury & Bản quyền Luu Van Mui
+        add_filter( 'theme_mod_footer_left_text', [ __CLASS__, 'filter_footer_copyright_text' ], 99 );
+        add_filter( 'theme_mod_footer_1', '__return_false', 99 );
+        add_filter( 'theme_mod_footer_2', '__return_false', 99 );
+        add_action( 'flatsome_before_footer', [ __CLASS__, 'render_sunshine_luxury_footer' ] );
+
         // Shortcode tự động hiển thị dự án ra Trang Chủ
         add_shortcode( 'sunshine_du_an', [ __CLASS__, 'render_projects_shortcode' ] );
         add_shortcode( 'sunshine_projects', [ __CLASS__, 'render_projects_shortcode' ] );
@@ -734,8 +740,128 @@ class Sunshine_Project_Manager {
     // =========================================================================
     public static function register_kbds_shortcodes() {
         add_shortcode('kbds_lead_form', [__CLASS__, 'render_kbds_lead_form']);
+        add_shortcode('kbds_quick_lead_card', [__CLASS__, 'render_kbds_quick_lead_card']);
         add_shortcode('kbds_loan_calculator', [__CLASS__, 'render_kbds_loan_calculator']);
         add_shortcode('kbds_project_news', [__CLASS__, 'render_kbds_project_news']);
+        add_action('wp_head', [__CLASS__, 'output_project_json_ld_schema'], 25);
+    }
+
+    public static function render_kbds_quick_lead_card($atts) {
+        $default_title = is_singular() ? get_the_title() : 'Dự án Bất Động Sản';
+        $atts = shortcode_atts([
+            'title'    => 'ĐĂNG KÝ NHẬN BỘ TÀI LIỆU GỐC',
+            'subtitle' => 'Nhận ngay Bảng giá dự kiến, Mặt bằng chi tiết & Chính sách ưu đãi qua Zalo trong 3 phút:',
+            'project'  => $default_title,
+        ], $atts);
+
+        $submitted = false;
+        if (isset($_POST['kbds_quick_submit']) && isset($_POST['kbds_lead_nonce'])) {
+            if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['kbds_lead_nonce'])), 'kbds_submit_lead')) {
+                $name  = sanitize_text_field(wp_unslash($_POST['kbds_name'] ?? ''));
+                $phone = sanitize_text_field(wp_unslash($_POST['kbds_phone'] ?? ''));
+                if ($name && $phone) {
+                    $submitted = true;
+                }
+            }
+        }
+
+        ob_start();
+        ?>
+        <div class="kbds-quick-lead-card" style="background:rgba(15,23,42,0.88);backdrop-filter:blur(12px);border:1.5px solid rgba(212,175,55,0.45);border-radius:16px;padding:26px 24px;box-shadow:0 20px 45px rgba(0,0,0,0.4);color:#ffffff;">
+            <div style="display:inline-block;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.45);color:#fbbf24;font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:0.8px;margin-bottom:10px;text-transform:uppercase;">
+                ⚡ PHÒNG KINH DOANH CHỦ ĐẦU TƯ
+            </div>
+            <h3 style="margin:0 0 8px;color:#ffffff;font-size:19px;font-weight:900;line-height:1.3;"><?php echo esc_html($atts['title']); ?></h3>
+            <p style="margin:0 0 18px;color:#cbd5e1;font-size:13.5px;line-height:1.55;"><?php echo esc_html($atts['subtitle']); ?></p>
+            <?php if ($submitted) : ?>
+                <div style="background:#15803d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;font-size:14px;">
+                    ✔ Đã tiếp nhận! Chuyên viên sẽ gửi trọn bộ tài liệu <?php echo esc_html($atts['project']); ?> qua Zalo cho quý khách ngay lập tức.
+                </div>
+            <?php else : ?>
+                <form method="post" style="display:flex;flex-direction:column;gap:11px;margin:0;">
+                    <?php wp_nonce_field('kbds_submit_lead', 'kbds_lead_nonce'); ?>
+                    <input type="hidden" name="kbds_project" value="<?php echo esc_attr($atts['project']); ?>" />
+                    <input type="text" name="kbds_name" placeholder="Họ và tên quý khách *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.96);color:#0f172a;font-size:14px;margin:0;" />
+                    <input type="tel" name="kbds_phone" placeholder="Số điện thoại nhận Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.96);color:#0f172a;font-size:14px;margin:0;" />
+                    <button type="submit" name="kbds_quick_submit" value="1" style="width:100%;padding:13px 18px;background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#0b2246;border:none;border-radius:8px;font-weight:900;font-size:14.5px;cursor:pointer;text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;">
+                        📥 TẢI TRỌN BỘ TÀI LIỆU GỐC →
+                    </button>
+                    <div style="text-align:center;font-size:12px;color:#94a3b8;margin-top:2px;">
+                        🔒 Bảo mật thông tin 100% • Hỗ trợ trực tiếp 24/7
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public static function output_project_json_ld_schema() {
+        if (!is_singular('du_an')) {
+            return;
+        }
+        $pid = get_the_ID();
+        $title = get_the_title($pid);
+        $url = get_permalink($pid);
+        $thumb = get_the_post_thumbnail_url($pid, 'full') ?: home_url('/wp-content/uploads/2026/11/tong-quan-hinode-Solera-pham-hung.jpg');
+        $desc = get_post_meta($pid, 'rank_math_description', true) ?: wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $pid)), 35);
+
+        $graph = [
+            [
+                '@type'         => ['ApartmentComplex', 'RealEstateListing'],
+                '@id'           => $url . '#project',
+                'name'          => $title,
+                'alternateName' => ($pid == 964) ? [
+                    'Dự án Hinode Solera Phạm Hùng',
+                    'Chung cư Hinode Solera Phạm Hùng',
+                    'Hinode Solera',
+                    'Chung cư Hinode Solera',
+                    'Hinode Solera 28A Phạm Hùng',
+                ] : [$title],
+                'url'           => $url,
+                'image'         => $thumb,
+                'description'   => $desc,
+                'address'       => [
+                    '@type'           => 'PostalAddress',
+                    'streetAddress'   => ($pid == 964) ? 'Số 28A Phạm Hùng, Phường Mỹ Đình 2, Quận Nam Từ Liêm' : 'Hà Nội',
+                    'addressLocality' => 'Hà Nội',
+                    'addressRegion'   => 'Hà Nội',
+                    'addressCountry'  => 'VN',
+                ],
+            ],
+        ];
+
+        if ($pid == 964) {
+            $graph[] = [
+                '@type'      => 'FAQPage',
+                '@id'        => $url . '#faq',
+                'mainEntity' => [
+                    [
+                        '@type' => 'Question',
+                        'name'  => 'Dự án Hinode Solera Phạm Hùng (Chung cư Hinode Solera) nằm ở đâu?',
+                        'acceptedAnswer' => [
+                            '@type' => 'Answer',
+                            'text'  => 'Dự án Hinode Solera Phạm Hùng (Chung cư Hinode Solera) tọa lạc tại Số 28A Phạm Hùng, phường Mỹ Đình 2, quận Nam Từ Liêm, TP. Hà Nội — nằm giữa tòa nhà VNPT Net và SIMCO Building, đối diện Công viên hồ điều hòa Cầu Giấy 32 ha.',
+                        ],
+                    ],
+                    [
+                        '@type' => 'Question',
+                        'name'  => 'Quy mô chung cư Hinode Solera Phạm Hùng như thế nào?',
+                        'acceptedAnswer' => [
+                            '@type' => 'Answer',
+                            'text'  => 'Chung cư Hinode Solera được quy hoạch trên quỹ đất 4.824 m² (mật độ xây dựng 40%) gồm 25 tầng nổi (đã cất nóc) và 03 tầng hầm rộng 12.258 m², mật độ 16 căn/sàn từ 1PN, 2PN, 3PN đến Dual Key (54,3 – 159,4 m²) sở hữu sổ hồng lâu dài.',
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@graph'   => $graph,
+        ];
+        echo "\n<!-- Sunshine Project Pillar Entity Schema -->\n";
+        echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "</script>\n";
     }
 
     public static function render_kbds_lead_form($atts) {
@@ -1483,7 +1609,300 @@ class Sunshine_Project_Manager {
                 gap: 20px !important;
             }
         }
+
+        /* ========================================================
+           11. CHÂN TRANG LUXURY (SUNSHINE FOOTER) & MENU DƯỚI RÕ NÉT
+           ======================================================== */
+        #footer .footer-widgets.footer-1,
+        #footer .footer-widgets.footer-2 {
+            display: none !important;
+        }
+
+        .sunshine-luxury-footer {
+            background: linear-gradient(180deg, #0a192f 0%, #071224 100%) !important;
+            color: #e2e8f0 !important;
+            border-top: 2px solid #d4af37 !important;
+            padding: 58px 0 42px !important;
+            font-size: 14.5px !important;
+            line-height: 1.7 !important;
+        }
+
+        .sunshine-footer-container {
+            max-width: 1340px !important;
+            margin: 0 auto !important;
+            padding: 0 20px !important;
+        }
+
+        .sunshine-footer-grid {
+            display: grid !important;
+            grid-template-columns: 1.35fr 1.05fr 0.95fr 1.15fr !important;
+            gap: 36px !important;
+        }
+
+        .sunshine-footer-brand {
+            display: flex !important;
+            align-items: center !important;
+            gap: 14px !important;
+            margin-bottom: 16px !important;
+        }
+
+        .sunshine-footer-logo {
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 50% !important;
+            border: 2px solid #d4af37 !important;
+            object-fit: cover !important;
+            background: #ffffff !important;
+            flex-shrink: 0 !important;
+        }
+
+        .sunshine-footer-brand-title {
+            color: #ffffff !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.4px !important;
+            margin: 0 !important;
+            line-height: 1.25 !important;
+            text-transform: uppercase !important;
+        }
+
+        .sunshine-footer-brand-sub {
+            color: #fbbf24 !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.8px !important;
+            text-transform: uppercase !important;
+            display: block !important;
+            margin-top: 3px !important;
+        }
+
+        .sunshine-footer-heading {
+            color: #fbbf24 !important;
+            font-size: 15.5px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.7px !important;
+            margin: 0 0 18px 0 !important;
+            padding-bottom: 10px !important;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.28) !important;
+            position: relative !important;
+        }
+
+        .sunshine-footer-heading::after {
+            content: "" !important;
+            position: absolute !important;
+            left: 0 !important;
+            bottom: -1px !important;
+            width: 48px !important;
+            height: 2px !important;
+            background: #d4af37 !important;
+        }
+
+        .sunshine-footer-list {
+            list-style: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .sunshine-footer-list li {
+            margin: 0 0 10px 0 !important;
+            padding: 0 !important;
+        }
+
+        .sunshine-footer-list li a {
+            color: #e2e8f0 !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        .sunshine-footer-list li a::before {
+            content: "›" !important;
+            color: #d4af37 !important;
+            font-weight: 900 !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
+        }
+
+        .sunshine-footer-list li a:hover {
+            color: #fbbf24 !important;
+            transform: translateX(4px) !important;
+        }
+
+        .sunshine-footer-contact-item {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+            color: #e2e8f0 !important;
+            font-size: 14px !important;
+        }
+
+        .sunshine-footer-contact-item strong {
+            color: #ffffff !important;
+        }
+
+        .sunshine-footer-contact-item a {
+            color: #fbbf24 !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+        }
+
+        /* Thanh chân trang dưới cùng (.absolute-footer) */
+        #footer .absolute-footer {
+            background-color: #050d1a !important;
+            border-top: 1px solid rgba(212, 175, 55, 0.25) !important;
+            padding: 18px 0 !important;
+            color: #cbd5e1 !important;
+        }
+
+        #footer .absolute-footer .container {
+            max-width: 1340px !important;
+            padding: 0 20px !important;
+        }
+
+        #footer .absolute-footer ul.footer-nav {
+            margin: 0 0 10px 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px 22px !important;
+            align-items: center !important;
+        }
+
+        #footer .absolute-footer ul.footer-nav li {
+            margin: 0 !important;
+            border: none !important;
+        }
+
+        #footer .absolute-footer ul.footer-nav li a {
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            text-transform: uppercase !important;
+            opacity: 1 !important;
+            text-decoration: none !important;
+            transition: color 0.2s ease !important;
+        }
+
+        #footer .absolute-footer ul.footer-nav li a:hover,
+        #footer .absolute-footer ul.footer-nav li.current-menu-item a {
+            color: #fbbf24 !important;
+        }
+
+        #footer .absolute-footer .copyright-footer {
+            color: #cbd5e1 !important;
+            font-size: 13.5px !important;
+            opacity: 1 !important;
+        }
+
+        #footer .absolute-footer .copyright-footer strong {
+            color: #fbbf24 !important;
+            font-weight: 800 !important;
+        }
+
+        @media (max-width: 960px) {
+            .sunshine-footer-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 28px !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .sunshine-footer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 24px !important;
+            }
+            #footer .absolute-footer ul.footer-nav {
+                justify-content: center !important;
+                gap: 8px 14px !important;
+            }
+        }
         </style>
+        <?php
+    }
+
+    public static function filter_footer_copyright_text( $val ) {
+        return 'Copyright [ux_current_year] &copy; <strong>Luu Van Mui</strong>';
+    }
+
+    public static function render_sunshine_luxury_footer() {
+        $logo_url = home_url( '/wp-content/uploads/2026/11/avatar-cropped-white.png' );
+        ?>
+        <div class="sunshine-luxury-footer">
+            <div class="sunshine-footer-container">
+                <div class="sunshine-footer-grid">
+                    <!-- CỘT 1: THƯƠNG HIỆU -->
+                    <div>
+                        <div class="sunshine-footer-brand">
+                            <img src="<?php echo esc_url( $logo_url ); ?>" alt="Tập đoàn Sunshine - Sunshine Group" class="sunshine-footer-logo" width="56" height="56" />
+                            <div>
+                                <h3 class="sunshine-footer-brand-title">Tập Đoàn Sunshine</h3>
+                                <span class="sunshine-footer-brand-sub">Sunshine Group • Smart Living 4.0</span>
+                            </div>
+                        </div>
+                        <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0 0 16px;">
+                            Hệ thống thông tin dự án, phân tích quy hoạch chuyên sâu và cập nhật bảng giá gốc các dự án bất động sản hạng sang: Căn hộ Smart Home, Sky Villas, Biệt thự sinh thái &amp; Shophouse thương mại.
+                        </p>
+                        <div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);border-radius:10px;padding:10px 14px;font-size:12.5px;color:#fbbf24;font-weight:700;">
+                            ✔ Hồ sơ pháp lý 1/500 • Bảng giá gốc CĐT • Hỗ trợ 24/7
+                        </div>
+                    </div>
+
+                    <!-- CỘT 2: DỰ ÁN TRỌNG ĐIỂM -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Dự Án Trọng Điểm</h4>
+                        <ul class="sunshine-footer-list">
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/handico-sunshine-new-ha-noi/' ) ); ?>">Dự Án Handico Sunshine New Hà Nội</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/hinode-solera-pham-hung/' ) ); ?>">Dự Án Hinode Solera Phạm Hùng</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/noble-west-lake-ha-noi/' ) ); ?>">Noble West Lake Hà Nội</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/lalalay-residences-bac-an-khanh/' ) ); ?>">Lalalay Residences Bắc An Khánh</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/the-president-park-ha-noi/' ) ); ?>">The President Park Mễ Trì</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an/vinhomes-king-park-bac-ninh/' ) ); ?>">Vinhomes King Park Bắc Ninh</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- CỘT 3: CHUYÊN MỤC & TIN TỨC -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Chuyên Mục BĐS</h4>
+                        <ul class="sunshine-footer-list">
+                            <li><a href="<?php echo esc_url( home_url( '/du-an-phat-trien-boi-sunshine/' ) ); ?>">Dự Án Phát Triển Bởi Sunshine</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/du-an-lien-ket-phat-trien/' ) ); ?>">Dự Án Liên Kết &amp; Phát Triển</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/danh-gia-du-an/' ) ); ?>">Phân Tích &amp; Đánh Giá Dự Án</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/tin-tap-doan-sunshine/' ) ); ?>">Tin Tập Đoàn Sunshine</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/tin-thi-truong-bds/' ) ); ?>">Tin Thị Trường BĐS</a></li>
+                            <li><a href="<?php echo esc_url( home_url( '/cam-nang-phap-ly/' ) ); ?>">Cẩm Nang &amp; Pháp Lý</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- CỘT 4: THÔNG TIN LIÊN HỆ -->
+                    <div>
+                        <h4 class="sunshine-footer-heading">Thông Tin Liên Hệ</h4>
+                        <div class="sunshine-footer-contact-item">
+                            <span>📍</span>
+                            <div><strong>Địa chỉ:</strong> Tòa nhà Sunshine Center, Số 16 Phạm Hùng, Q. Nam Từ Liêm, TP. Hà Nội</div>
+                        </div>
+                        <div class="sunshine-footer-contact-item">
+                            <span>📞</span>
+                            <div><strong>Hotline / Zalo 24/7:</strong> <a href="tel:0968339328">0968.339.328</a></div>
+                        </div>
+                        <div class="sunshine-footer-contact-item">
+                            <span>🌐</span>
+                            <div><strong>Website:</strong> <a href="<?php echo esc_url( home_url( '/' ) ); ?>">sunshine-group.com.vn</a></div>
+                        </div>
+                        <div class="sunshine-footer-contact-item">
+                            <span>🕒</span>
+                            <div><strong>Giờ làm việc:</strong> 08:00 – 21:00 (Tất cả các ngày trong tuần)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <?php
     }
 
@@ -1502,8 +1921,39 @@ class Sunshine_Project_Manager {
         register_rest_route( 'sunshine/v1', '/flush-permalinks', [
             'methods'             => 'POST',
             'callback'            => function() {
+                set_theme_mod( 'footer_left_text', 'Copyright [ux_current_year] &copy; <strong>Luu Van Mui</strong>' );
                 flush_rewrite_rules( true );
-                return [ 'success' => true, 'rules_flushed' => true ];
+                if ( ! headers_sent() ) {
+                    header( 'X-LiteSpeed-Purge: *' );
+                }
+                do_action( 'litespeed_purge_all' );
+                wp_cache_flush();
+                return [ 'success' => true, 'rules_flushed' => true, 'cache_purged' => true ];
+            },
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            },
+        ] );
+
+        register_rest_route( 'sunshine/v1', '/sync-seo-meta', [
+            'methods'             => 'POST',
+            'callback'            => function( $request ) {
+                $params = $request->get_json_params();
+                $post_id = (int) ( $params['post_id'] ?? 0 );
+                if ( ! $post_id && ! empty( $params['slug'] ) ) {
+                    $p = get_page_by_path( sanitize_text_field( $params['slug'] ), OBJECT, [ 'post', 'page', 'du_an' ] );
+                    if ( $p ) {
+                        $post_id = $p->ID;
+                    }
+                }
+                if ( ! $post_id ) {
+                    return new WP_Error( 'not_found', 'Post not found', [ 'status' => 404 ] );
+                }
+                $meta = $params['meta'] ?? [];
+                foreach ( $meta as $k => $v ) {
+                    update_post_meta( $post_id, sanitize_key( $k ), $v );
+                }
+                return [ 'success' => true, 'post_id' => $post_id, 'updated_keys' => array_keys( $meta ) ];
             },
             'permission_callback' => function() {
                 return current_user_can( 'manage_options' );
@@ -1570,11 +2020,49 @@ class Sunshine_Project_Manager {
             return new WP_Error( 'write_failed', 'Không thể ghi file lên ổ cứng', [ 'status' => 500 ] );
         }
 
+        $att_id = 0;
+        if ( ! empty( $params['register_media'] ) ) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+
+            global $wpdb;
+            $rel_meta = substr( $rel_path, strlen( 'wp-content/uploads/' ) );
+            $att_id = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s LIMIT 1",
+                $rel_meta
+            ) );
+
+            $filetype = wp_check_filetype( basename( $dest ), null );
+            $attachment = [
+                'guid'           => home_url( '/' . $rel_path ),
+                'post_mime_type' => $filetype['type'] ?: 'image/jpeg',
+                'post_title'     => sanitize_text_field( $params['title'] ?? pathinfo( $dest, PATHINFO_FILENAME ) ),
+                'post_excerpt'   => sanitize_text_field( $params['caption'] ?? '' ),
+                'post_content'   => sanitize_text_field( $params['caption'] ?? '' ),
+                'post_status'    => 'inherit',
+            ];
+
+            if ( $att_id ) {
+                $attachment['ID'] = $att_id;
+                wp_update_post( $attachment );
+            } else {
+                $att_id = wp_insert_attachment( $attachment, $dest );
+            }
+
+            $attach_data = wp_generate_attachment_metadata( $att_id, $dest );
+            wp_update_attachment_metadata( $att_id, $attach_data );
+            if ( ! empty( $params['alt'] ) ) {
+                update_post_meta( $att_id, '_wp_attachment_image_alt', sanitize_text_field( $params['alt'] ) );
+            }
+        }
+
         return [
-            'success' => true,
-            'path'    => $rel_path,
-            'bytes'   => $written,
-            'url'     => home_url( '/' . $rel_path ),
+            'success'       => true,
+            'path'          => $rel_path,
+            'bytes'         => $written,
+            'url'           => home_url( '/' . $rel_path ),
+            'attachment_id' => $att_id,
         ];
     }
 }
