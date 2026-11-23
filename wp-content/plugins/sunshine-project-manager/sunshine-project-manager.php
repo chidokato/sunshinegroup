@@ -36,6 +36,7 @@ class Sunshine_Project_Manager {
         add_filter( 'theme_mod_footer_1', '__return_false', 99 );
         add_filter( 'theme_mod_footer_2', '__return_false', 99 );
         add_action( 'flatsome_before_footer', [ __CLASS__, 'render_sunshine_luxury_footer' ] );
+        add_action( 'wp_footer', [ __CLASS__, 'output_sunshine_subnav_scripts' ], 99 );
 
         // Shortcode tự động hiển thị dự án ra Trang Chủ
         add_shortcode( 'sunshine_du_an', [ __CLASS__, 'render_projects_shortcode' ] );
@@ -1860,46 +1861,60 @@ class Sunshine_Project_Manager {
         }
 
         /* ========================================================
-           9. THANH MENU PHỤ CỐ ĐỊNH CHUẨN DỰ ÁN (STICKY SUBNAV)
+           9. THANH MENU PHỤ CỐ ĐỊNH CHUẨN DỰ ÁN (STICKY SUBNAV) - LUXURY PILLS
            ======================================================== */
         html {
             scroll-behavior: smooth !important;
         }
 
+        :root {
+            --kbds-subnav-top: 70px;
+        }
+        body.admin-bar {
+            --kbds-subnav-top: 102px;
+        }
+        @media (max-width: 782px) {
+            body.admin-bar {
+                --kbds-subnav-top: 116px;
+            }
+        }
+
         .kbds-project-subnav {
             position: -webkit-sticky !important;
             position: sticky !important;
-            top: 70px !important;
-            z-index: 999 !important;
-            background: #0b2246 !important;
-            border-bottom: 2px solid #d4af37 !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+            top: var(--kbds-subnav-top, 70px) !important;
+            z-index: 9998 !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06) !important;
             width: 100% !important;
             margin: 0 !important;
+            padding: 8px 0 !important;
+            transition: top 0.2s ease, background 0.2s ease !important;
         }
 
-        body.admin-bar .kbds-project-subnav {
-            top: 102px !important;
-        }
-
-        .kbds-project-subnav .kbds-container {
-            max-width: 1240px !important;
+        .kbds-project-subnav .kbds-container,
+        .kbds-project-subnav .kbds-subnav-container {
+            max-width: 1300px !important;
             margin: 0 auto !important;
+            padding: 0 16px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-            padding: 10px 20px !important;
-            gap: 15px !important;
+            gap: 12px !important;
+            box-sizing: border-box !important;
         }
 
+        /* Brand tên dự án bên trái trên Desktop */
         .kbds-subnav-brand {
             font-weight: 800 !important;
-            font-size: 14.5px !important;
-            color: #ffffff !important;
+            font-size: 13px !important;
+            color: #0b2246 !important;
             display: flex !important;
             align-items: center !important;
             gap: 8px !important;
             text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
             white-space: nowrap !important;
             order: 1 !important;
             flex-shrink: 0 !important;
@@ -1907,112 +1922,145 @@ class Sunshine_Project_Manager {
 
         .kbds-subnav-dot {
             display: inline-block !important;
-            width: 9px !important;
-            height: 9px !important;
+            width: 8px !important;
+            height: 8px !important;
             background: #d4af37 !important;
             border-radius: 50% !important;
-            box-shadow: 0 0 8px #d4af37 !important;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.9) !important;
+            flex-shrink: 0 !important;
         }
 
+        /* Danh sách nút cuộn dạng Pills */
         .kbds-subnav-links {
             display: flex !important;
             align-items: center !important;
-            gap: 14px !important;
+            gap: 8px !important;
             white-space: nowrap !important;
             flex: 1 1 auto !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             order: 2 !important;
-            overflow: visible !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            padding: 2px 2px !important;
         }
 
         .kbds-subnav-links::-webkit-scrollbar {
             display: none !important;
+            width: 0 !important;
+            height: 0 !important;
         }
 
         .kbds-subnav-link {
-            color: #e2e8f0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #334155 !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 20px !important;
             text-decoration: none !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
             font-weight: 700 !important;
-            padding: 8px 14px !important;
-            border-radius: 6px !important;
-            transition: all 0.2s ease !important;
+            padding: 6px 14px !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             white-space: nowrap !important;
-            border-bottom: 2px solid transparent !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+            flex-shrink: 0 !important;
+            line-height: 1.3 !important;
         }
 
         .kbds-subnav-link:hover,
-        .kbds-subnav-link:focus,
-        .kbds-subnav-link.active {
-            color: #d4af37 !important;
-            background: rgba(212, 175, 55, 0.15) !important;
-            border-bottom: 2px solid #d4af37 !important;
+        .kbds-subnav-link:focus {
+            color: #0b2246 !important;
+            border-color: #0b2246 !important;
+            background: #f8fafc !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 3px 8px rgba(11, 34, 70, 0.12) !important;
         }
 
+        .kbds-subnav-link.active {
+            color: #ffffff !important;
+            background: #0b2246 !important;
+            border-color: #0b2246 !important;
+            box-shadow: 0 3px 10px rgba(11, 34, 70, 0.25) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Nút CTA Nhận Báo Giá Gốc viền vàng gradient */
         .kbds-subnav-cta {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
             background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%) !important;
             color: #0b2246 !important;
-            padding: 9px 20px !important;
+            border: 1px solid #c59b27 !important;
+            padding: 7px 18px !important;
             border-radius: 20px !important;
-            font-size: 13px !important;
+            font-size: 12.5px !important;
             font-weight: 800 !important;
             text-decoration: none !important;
             text-transform: uppercase !important;
+            letter-spacing: 0.3px !important;
             white-space: nowrap !important;
             box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35) !important;
             transition: all 0.2s ease !important;
             order: 3 !important;
             margin-left: auto !important;
             flex-shrink: 0 !important;
+            line-height: 1.3 !important;
         }
 
         .kbds-subnav-cta:hover {
-            transform: translateY(-2px) !important;
+            transform: translateY(-1px) !important;
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5) !important;
             color: #ffffff !important;
         }
 
-        /* Offset cuộn chuẩn để không bị đè bởi sticky header/subnav */
+        /* Offset cuộn cho các section chuẩn */
         section[id], div[id], h2[id], h3[id],
-        #tong-quan, #vi-tri, #quy-hoach, #san-pham, #tien-ich, #chinh-sach, #tien-do, #hoi-dap, #tin-tuc-du-an, #dang-ky, #nhan-bang-gia, #mat-bang, #can-ho-dual-key {
-            scroll-margin-top: 140px !important;
+        #tong-quan, #vi-tri, #quy-hoach, #san-pham, #tien-ich, #chinh-sach, #tien-do, #hoi-dap, #tin-tuc-du-an, #dang-ky, #nhan-bang-gia, #mat-bang, #can-ho-dual-key, #tieu-chuan-ban-giao, #tien-do-thuc-te {
+            scroll-margin-top: 135px !important;
         }
 
-        @media (max-width: 820px) {
+        /* RESPONSIVE MOBILE & TABLET (< 850px) */
+        @media (max-width: 850px) {
             .kbds-subnav-brand {
                 display: none !important;
             }
             .kbds-project-subnav {
-                top: 70px !important;
+                padding: 6px 0 !important;
             }
-            body.admin-bar .kbds-project-subnav {
-                top: 116px !important;
-            }
-            .kbds-project-subnav .kbds-container {
-                padding: 6px 10px !important;
+            .kbds-project-subnav .kbds-container,
+            .kbds-project-subnav .kbds-subnav-container {
+                padding: 0 8px !important;
                 gap: 6px !important;
                 justify-content: flex-start !important;
             }
             .kbds-subnav-links {
-                justify-content: flex-start !important;
-                gap: 6px !important;
                 order: 1 !important;
-                overflow-x: auto !important;
-                scrollbar-width: none !important;
+                gap: 6px !important;
+                padding: 2px 0 !important;
+                flex: 1 1 auto !important;
             }
             .kbds-subnav-link {
                 font-size: 12px !important;
-                padding: 6px 9px !important;
-                background: rgba(255, 255, 255, 0.08) !important;
+                padding: 5px 11px !important;
+                border-radius: 16px !important;
+                line-height: 1.2 !important;
             }
             .kbds-subnav-cta {
-                padding: 6px 12px !important;
-                font-size: 11px !important;
                 order: 2 !important;
-                margin-left: auto !important;
+                font-size: 11.5px !important;
+                padding: 5px 12px !important;
+                border-radius: 16px !important;
+                line-height: 1.2 !important;
             }
             section[id], div[id], h2[id], h3[id] {
-                scroll-margin-top: 110px !important;
+                scroll-margin-top: 125px !important;
             }
         }
 
@@ -2601,6 +2649,116 @@ class Sunshine_Project_Manager {
             'url'           => home_url( '/' . $rel_path ),
             'attachment_id' => $att_id,
         ];
+    }
+
+    /**
+     * Script điều hướng mượt mà, định vị pixel-perfect và Scrollspy cho menu phụ
+     */
+    public static function output_sunshine_subnav_scripts() {
+        ?>
+        <script id="kbds-subnav-js">
+        (function() {
+            function initKbdsSubnav() {
+                var subnav = document.querySelector('.kbds-project-subnav');
+                if (!subnav) return;
+
+                var header = document.querySelector('.header-wrapper.stuck') || document.querySelector('.header-wrapper') || document.getElementById('header');
+                var adminBar = document.getElementById('wpadminbar');
+
+                function updateSubnavPosition() {
+                    var adminH = (adminBar && window.getComputedStyle(adminBar).position === 'fixed') ? adminBar.offsetHeight : 0;
+                    var headerH = 70;
+                    if (header) {
+                        var isFixed = window.getComputedStyle(header).position === 'fixed' || header.classList.contains('stuck');
+                        if (isFixed) {
+                            var rect = header.getBoundingClientRect();
+                            headerH = Math.round(rect.height);
+                        } else {
+                            headerH = window.innerWidth <= 820 ? 70 : 70;
+                        }
+                    }
+                    var totalTop = headerH + adminH;
+                    subnav.style.top = totalTop + 'px';
+                    document.documentElement.style.setProperty('--kbds-subnav-top', totalTop + 'px');
+                }
+
+                window.addEventListener('scroll', updateSubnavPosition, { passive: true });
+                window.addEventListener('resize', updateSubnavPosition, { passive: true });
+                updateSubnavPosition();
+
+                // Smooth scrolling
+                var links = subnav.querySelectorAll('.kbds-subnav-link');
+                var linksContainer = subnav.querySelector('.kbds-subnav-links');
+
+                links.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        var href = this.getAttribute('href');
+                        if (href && href.charAt(0) === '#' && href.length > 1) {
+                            var target = document.querySelector(href);
+                            if (target) {
+                                e.preventDefault();
+                                var adminH = (adminBar && window.getComputedStyle(adminBar).position === 'fixed') ? adminBar.offsetHeight : 0;
+                                var headerH = 70;
+                                if (header) {
+                                    headerH = Math.round(header.getBoundingClientRect().height);
+                                }
+                                var subnavH = subnav.offsetHeight || 44;
+                                var offset = target.getBoundingClientRect().top + window.pageYOffset - (headerH + subnavH + adminH + 8);
+                                window.scrollTo({ top: offset, behavior: 'smooth' });
+
+                                links.forEach(function(l) { l.classList.remove('active'); });
+                                link.classList.add('active');
+                            }
+                        }
+                    });
+                });
+
+                // Scrollspy
+                var sections = [];
+                links.forEach(function(l) {
+                    var href = l.getAttribute('href');
+                    if (href && href.charAt(0) === '#' && href.length > 1) {
+                        var sec = document.querySelector(href);
+                        if (sec) sections.push({ link: l, el: sec });
+                    }
+                });
+
+                if (sections.length > 0) {
+                    function onScrollSpy() {
+                        var scrollPos = window.pageYOffset + 180;
+                        var current = null;
+                        for (var i = 0; i < sections.length; i++) {
+                            var top = sections[i].el.offsetTop;
+                            if (scrollPos >= top) {
+                                current = sections[i];
+                            }
+                        }
+                        if (current) {
+                            links.forEach(function(l) { l.classList.remove('active'); });
+                            current.link.classList.add('active');
+                            if (linksContainer && window.innerWidth <= 850) {
+                                var linkLeft = current.link.offsetLeft;
+                                var linkWidth = current.link.offsetWidth;
+                                var cWidth = linksContainer.offsetWidth;
+                                linksContainer.scrollTo({
+                                    left: linkLeft - (cWidth / 2) + (linkWidth / 2),
+                                    behavior: 'smooth'
+                                });
+                            }
+                        }
+                    }
+                    window.addEventListener('scroll', onScrollSpy, { passive: true });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initKbdsSubnav);
+            } else {
+                initKbdsSubnav();
+            }
+        })();
+        </script>
+        <?php
     }
 }
 
