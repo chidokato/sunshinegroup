@@ -1108,8 +1108,18 @@ class Sunshine_Project_Manager {
         ?>
         <style id="sunshine-master-styles">
         /* 1. ĐỘ RỘNG WEBSITE CHUẨN HIỆN ĐẠI 1340PX */
-        .container, .row, .kbds-container, .header-inner, .site-width {
+        .container, .row:not(.row-full-width), .kbds-container, .header-inner, .site-width {
             max-width: 1340px !important;
+        }
+        .row.row-full-width {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        .kbds-2col-grid > p,
+        .kbds-2col-grid > br,
+        .kbds-hero-grid > p,
+        .kbds-hero-grid > br {
+            display: none !important;
         }
         
         /* 2. ẨN HOÀN TOÀN THANH TOP-BAR */
