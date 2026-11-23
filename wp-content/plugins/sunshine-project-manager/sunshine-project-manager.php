@@ -616,6 +616,16 @@ class Sunshine_Project_Manager {
                             . '</div>';
 
                         $content .= $cta_box;
+
+                        // Tự động chèn form đăng ký tương ứng (cao tầng / thấp tầng) nếu bài viết chưa có form
+                        if ( false === strpos( $content, 'kbds-lead-box' ) && false === strpos( $content, 'kbds_lead_form' ) ) {
+                            $proj_type = self::get_form_product_type([], $project->ID);
+                            $content .= self::render_kbds_lead_form([
+                                'project' => $p_title,
+                                'type'    => $proj_type,
+                                'title'   => '📥 Đăng Ký Nhận Bảng Giá & Mặt Bằng ' . $p_title,
+                            ]);
+                        }
                         break;
                     }
                 }
@@ -738,12 +748,147 @@ class Sunshine_Project_Manager {
     // =========================================================================
     // KBDS COMPATIBILITY SHORTCODES: LEAD FORM & PROJECT NEWS SLIDER
     // =========================================================================
+    // KBDS SHORTCODES & LANDING ELEMENTS
+    // =========================================================================
     public static function register_kbds_shortcodes() {
         add_shortcode('kbds_lead_form', [__CLASS__, 'render_kbds_lead_form']);
+        add_shortcode('kbds_lead_form_cao_tang', [__CLASS__, 'render_kbds_lead_form_cao_tang']);
+        add_shortcode('kbds_lead_form_thap_tang', [__CLASS__, 'render_kbds_lead_form_thap_tang']);
         add_shortcode('kbds_quick_lead_card', [__CLASS__, 'render_kbds_quick_lead_card']);
+        add_shortcode('kbds_quick_lead_card_cao_tang', [__CLASS__, 'render_kbds_quick_lead_card_cao_tang']);
+        add_shortcode('kbds_quick_lead_card_thap_tang', [__CLASS__, 'render_kbds_quick_lead_card_thap_tang']);
         add_shortcode('kbds_loan_calculator', [__CLASS__, 'render_kbds_loan_calculator']);
         add_shortcode('kbds_project_news', [__CLASS__, 'render_kbds_project_news']);
         add_action('wp_head', [__CLASS__, 'output_project_json_ld_schema'], 25);
+    }
+
+    /**
+     * Xác định dòng sản phẩm: cao_tang (chung cư/căn hộ) hoặc thap_tang (liền kề/biệt thự/shophouse)
+     */
+    public static function get_form_product_type($atts = [], $post_id = 0) {
+        if (!empty($atts['type'])) {
+            $t = strtolower(trim($atts['type']));
+            if (in_array($t, ['thap_tang', 'thap-tang', 'thaptang', 'low-rise', 'lowrise', 'biet_thu', 'shophouse', 'lien_ke'])) {
+                return 'thap_tang';
+            }
+            if (in_array($t, ['cao_tang', 'cao-tang', 'caotang', 'high-rise', 'highrise', 'chung_cu', 'can_ho'])) {
+                return 'cao_tang';
+            }
+        }
+
+        if (!$post_id) {
+            $post_id = get_the_ID();
+        }
+
+        $haystack = '';
+        if (!empty($atts['project'])) {
+            $haystack .= ' ' . $atts['project'];
+        }
+        if ($post_id) {
+            $haystack .= ' ' . get_the_title($post_id) . ' ' . get_post_field('post_name', $post_id);
+            $terms = wp_get_post_terms($post_id, ['loai_hinh_du_an', 'danh_muc_du_an', 'post_tag']);
+            if (!is_wp_error($terms) && !empty($terms)) {
+                foreach ($terms as $term) {
+                    $haystack .= ' ' . $term->name . ' ' . $term->slug;
+                }
+            }
+        }
+
+        $haystack = mb_strtolower($haystack, 'UTF-8');
+        $low_rise_keywords = ['liền kề', 'lien ke', 'biệt thự', 'biet thu', 'shophouse', 'thấp tầng', 'thap tang', 'dinh thự', 'dinh thu', 'the president park', 'president-park', 'the grand riveria', 'vinhomes king park', 'handico', 'handico-sunshine'];
+        foreach ($low_rise_keywords as $kw) {
+            if (mb_strpos($haystack, $kw) !== false) {
+                return 'thap_tang';
+            }
+        }
+
+        return 'cao_tang';
+    }
+
+    /**
+     * Lấy danh mục nhu cầu chuẩn theo dòng sản phẩm
+     */
+    public static function get_demand_options($product_type) {
+        if ($product_type === 'thap_tang') {
+            return [
+                'Liền kề'           => 'Liền kề',
+                'Biệt thự'          => 'Biệt thự',
+                'Shophouse'         => 'Shophouse',
+                'Biệt thự Song lập' => 'Biệt thự Song lập',
+                'Biệt thự Đơn lập'  => 'Biệt thự Đơn lập',
+            ];
+        }
+
+        return [
+            'Studio'          => 'Studio',
+            'Căn hộ 1PN'      => 'Căn hộ 1PN',
+            'Căn hộ 2PN'      => 'Căn hộ 2PN',
+            'Căn hộ 3PN'      => 'Căn hộ 3PN',
+            'Căn hộ Dual Key' => 'Căn hộ Dual Key',
+            'Penthouse'       => 'Penthouse / Duplex',
+        ];
+    }
+
+    /**
+     * Lưu trữ lead khách hàng & gửi email thông báo
+     */
+    public static function save_lead_submission($data) {
+        $leads = get_option('sunshine_customer_leads', []);
+        if (!is_array($leads)) {
+            $leads = [];
+        }
+        array_unshift($leads, $data);
+        if (count($leads) > 200) {
+            $leads = array_slice($leads, 0, 200);
+        }
+        update_option('sunshine_customer_leads', $leads);
+
+        $admin_email = get_option('admin_email');
+        $to_emails = array_unique(array_filter([$admin_email, 'luumui91@gmail.com']));
+        $project_name = !empty($data['project']) ? $data['project'] : 'Dự án BĐS';
+        $demand_name = !empty($data['demand']) ? $data['demand'] : 'Chung';
+        $type_text = ($data['type'] === 'thap_tang') ? 'Thấp tầng (Liền kề / Biệt thự / Shophouse)' : 'Cao tầng (Studio / Căn hộ 1-3PN)';
+
+        $subject = '🔔 [Khách Đăng Ký Mới] ' . $project_name . ' - ' . $demand_name;
+        $body = "THÔNG TIN KHÁCH HÀNG ĐĂNG KÝ:\n"
+              . "------------------------------------\n"
+              . "• Họ và tên: " . ($data['name'] ?? '') . "\n"
+              . "• Số điện thoại / Zalo: " . ($data['phone'] ?? '') . "\n"
+              . "• Nhu cầu quan tâm: " . $demand_name . "\n"
+              . "• Dòng sản phẩm: " . $type_text . "\n"
+              . "• Dự án: " . $project_name . "\n"
+              . "• Email: " . (!empty($data['email']) ? $data['email'] : 'Không cung cấp') . "\n"
+              . "• Form: " . ($data['form'] ?? 'Website') . "\n"
+              . "• Thời gian gửi: " . ($data['time'] ?? current_time('mysql')) . "\n"
+              . "• Link đăng ký: " . ($data['source_url'] ?? '') . "\n"
+              . "• IP Khách hàng: " . ($data['ip'] ?? '') . "\n";
+
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+        @wp_mail($to_emails, $subject, $body, $headers);
+    }
+
+    public static function render_kbds_lead_form_cao_tang($atts) {
+        $atts = is_array($atts) ? $atts : [];
+        $atts['type'] = 'cao_tang';
+        return self::render_kbds_lead_form($atts);
+    }
+
+    public static function render_kbds_lead_form_thap_tang($atts) {
+        $atts = is_array($atts) ? $atts : [];
+        $atts['type'] = 'thap_tang';
+        return self::render_kbds_lead_form($atts);
+    }
+
+    public static function render_kbds_quick_lead_card_cao_tang($atts) {
+        $atts = is_array($atts) ? $atts : [];
+        $atts['type'] = 'cao_tang';
+        return self::render_kbds_quick_lead_card($atts);
+    }
+
+    public static function render_kbds_quick_lead_card_thap_tang($atts) {
+        $atts = is_array($atts) ? $atts : [];
+        $atts['type'] = 'thap_tang';
+        return self::render_kbds_quick_lead_card($atts);
     }
 
     public static function render_kbds_quick_lead_card($atts) {
@@ -752,38 +897,77 @@ class Sunshine_Project_Manager {
             'title'    => 'ĐĂNG KÝ NHẬN BỘ TÀI LIỆU GỐC',
             'subtitle' => 'Nhận ngay Bảng giá dự kiến, Mặt bằng chi tiết & Chính sách ưu đãi qua Zalo trong 3 phút:',
             'project'  => $default_title,
+            'type'     => '',
+            'demand'   => '',
         ], $atts);
 
+        $product_type = self::get_form_product_type($atts);
+        $demand_options = self::get_demand_options($product_type);
+        $type_badge_label = ($product_type === 'thap_tang') ? 'SẢN PHẨM THẤP TẦNG' : 'CĂN HỘ CAO TẦNG';
+
         $submitted = false;
+        $submitted_demand = '';
         if (isset($_POST['kbds_quick_submit']) && isset($_POST['kbds_lead_nonce'])) {
             if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['kbds_lead_nonce'])), 'kbds_submit_lead')) {
-                $name  = sanitize_text_field(wp_unslash($_POST['kbds_name'] ?? ''));
-                $phone = sanitize_text_field(wp_unslash($_POST['kbds_phone'] ?? ''));
+                $name   = sanitize_text_field(wp_unslash($_POST['kbds_name'] ?? ''));
+                $phone  = sanitize_text_field(wp_unslash($_POST['kbds_phone'] ?? ''));
+                $demand = sanitize_text_field(wp_unslash($_POST['kbds_demand'] ?? ''));
                 if ($name && $phone) {
                     $submitted = true;
+                    $submitted_demand = $demand;
+                    self::save_lead_submission([
+                        'form'       => 'quick_lead_card',
+                        'name'       => $name,
+                        'phone'      => $phone,
+                        'email'      => '',
+                        'project'    => sanitize_text_field(wp_unslash($_POST['kbds_project'] ?? $atts['project'])),
+                        'type'       => $product_type,
+                        'demand'     => $demand,
+                        'source_url' => is_singular() ? get_permalink() : home_url($_SERVER['REQUEST_URI'] ?? '/'),
+                        'time'       => current_time('mysql'),
+                        'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+                    ]);
                 }
             }
         }
 
         ob_start();
         ?>
-        <div class="kbds-quick-lead-card" style="background:rgba(15,23,42,0.88);backdrop-filter:blur(12px);border:1.5px solid rgba(212,175,55,0.45);border-radius:16px;padding:26px 24px;box-shadow:0 20px 45px rgba(0,0,0,0.4);color:#ffffff;">
-            <div style="display:inline-block;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.45);color:#fbbf24;font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:0.8px;margin-bottom:10px;text-transform:uppercase;">
-                ⚡ PHÒNG KINH DOANH CHỦ ĐẦU TƯ
+        <div class="kbds-quick-lead-card" style="background:rgba(15,23,42,0.92);backdrop-filter:blur(14px);border:1.5px solid rgba(212,175,55,0.45);border-radius:16px;padding:26px 24px;box-shadow:0 20px 45px rgba(0,0,0,0.45);color:#ffffff;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <div style="display:inline-block;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.45);color:#fbbf24;font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:0.8px;text-transform:uppercase;">
+                    ⚡ PHÒNG KINH DOANH CHỦ ĐẦU TƯ
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(56,189,248,0.25);">
+                    ✦ <?php echo esc_html($type_badge_label); ?>
+                </div>
             </div>
             <h3 style="margin:0 0 8px;color:#ffffff;font-size:19px;font-weight:900;line-height:1.3;"><?php echo esc_html($atts['title']); ?></h3>
-            <p style="margin:0 0 18px;color:#cbd5e1;font-size:13.5px;line-height:1.55;"><?php echo esc_html($atts['subtitle']); ?></p>
+            <p style="margin:0 0 16px;color:#cbd5e1;font-size:13.5px;line-height:1.55;"><?php echo esc_html($atts['subtitle']); ?></p>
             <?php if ($submitted) : ?>
-                <div style="background:#15803d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;font-size:14px;">
-                    ✔ Đã tiếp nhận! Chuyên viên sẽ gửi trọn bộ tài liệu <?php echo esc_html($atts['project']); ?> qua Zalo cho quý khách ngay lập tức.
+                <div style="background:#15803d;color:#fff;padding:16px;border-radius:10px;font-weight:700;font-size:14px;line-height:1.5;">
+                    ✔ Đã tiếp nhận đăng ký<?php echo $submitted_demand ? ' cho <strong>' . esc_html($submitted_demand) . '</strong>' : ''; ?>! Chuyên viên sẽ gửi trọn bộ tài liệu <strong><?php echo esc_html($atts['project']); ?></strong> qua Zalo cho quý khách ngay lập tức.
                 </div>
             <?php else : ?>
                 <form method="post" style="display:flex;flex-direction:column;gap:11px;margin:0;">
                     <?php wp_nonce_field('kbds_submit_lead', 'kbds_lead_nonce'); ?>
                     <input type="hidden" name="kbds_project" value="<?php echo esc_attr($atts['project']); ?>" />
-                    <input type="text" name="kbds_name" placeholder="Họ và tên quý khách *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.96);color:#0f172a;font-size:14px;margin:0;" />
-                    <input type="tel" name="kbds_phone" placeholder="Số điện thoại nhận Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.96);color:#0f172a;font-size:14px;margin:0;" />
-                    <button type="submit" name="kbds_quick_submit" value="1" style="width:100%;padding:13px 18px;background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#0b2246;border:none;border-radius:8px;font-weight:900;font-size:14.5px;cursor:pointer;text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;">
+                    <input type="hidden" name="kbds_type" value="<?php echo esc_attr($product_type); ?>" />
+                    
+                    <input type="text" name="kbds_name" placeholder="Họ và tên quý khách *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:500;margin:0;box-sizing:border-box;" />
+                    
+                    <input type="tel" name="kbds_phone" placeholder="Số điện thoại nhận Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:500;margin:0;box-sizing:border-box;" />
+                    
+                    <select name="kbds_demand" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:600;margin:0;box-sizing:border-box;cursor:pointer;-webkit-appearance:menulist;">
+                        <option value="" disabled <?php echo empty($atts['demand']) ? 'selected' : ''; ?>>-- Chọn nhu cầu quan tâm * --</option>
+                        <?php foreach ($demand_options as $val => $label) : ?>
+                            <option value="<?php echo esc_attr($val); ?>" <?php selected($atts['demand'], $val); ?>>
+                                <?php echo esc_html($label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <button type="submit" name="kbds_quick_submit" value="1" style="width:100%;padding:13px 18px;background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#0b2246;border:none;border-radius:8px;font-weight:900;font-size:14.5px;cursor:pointer;text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;box-shadow:0 4px 14px rgba(212,175,55,0.35);transition:all 0.25s ease;">
                         📥 TẢI TRỌN BỘ TÀI LIỆU GỐC →
                     </button>
                     <div style="text-align:center;font-size:12px;color:#94a3b8;margin-top:2px;">
@@ -873,48 +1057,85 @@ class Sunshine_Project_Manager {
             'project'      => $default_title,
             'source_url'   => $default_url,
             'source_title' => $default_title,
+            'type'         => '',
+            'demand'       => '',
         ], $atts);
 
+        $product_type = self::get_form_product_type($atts);
+        $demand_options = self::get_demand_options($product_type);
+        $type_badge_label = ($product_type === 'thap_tang') ? 'Dòng sản phẩm Thấp tầng: Liền kề • Biệt thự • Shophouse' : 'Dòng sản phẩm Cao tầng: Studio • Căn hộ 1PN • 2PN • 3PN';
+
         $submitted = false;
+        $submitted_demand = '';
         if (isset($_POST['kbds_lead_submit']) && isset($_POST['kbds_lead_nonce'])) {
             if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['kbds_lead_nonce'])), 'kbds_submit_lead')) {
                 $name    = sanitize_text_field(wp_unslash($_POST['kbds_name'] ?? ''));
                 $phone   = sanitize_text_field(wp_unslash($_POST['kbds_phone'] ?? ''));
                 $email   = sanitize_email(wp_unslash($_POST['kbds_email'] ?? ''));
                 $project = sanitize_text_field(wp_unslash($_POST['kbds_project'] ?? ''));
-                $demand  = sanitize_textarea_field(wp_unslash($_POST['kbds_demand'] ?? ''));
+                $demand  = sanitize_text_field(wp_unslash($_POST['kbds_demand'] ?? ''));
 
                 if ($name && $phone) {
                     $submitted = true;
+                    $submitted_demand = $demand;
+                    self::save_lead_submission([
+                        'form'       => 'lead_form',
+                        'name'       => $name,
+                        'phone'      => $phone,
+                        'email'      => $email,
+                        'project'    => $project ?: $atts['project'],
+                        'type'       => $product_type,
+                        'demand'     => $demand,
+                        'source_url' => $atts['source_url'],
+                        'time'       => current_time('mysql'),
+                        'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+                    ]);
                 }
             }
         }
 
         ob_start();
         ?>
-        <div class="kbds-lead-box" style="background:linear-gradient(135deg,#0a192f 0%,#164675 100%);color:#fff;padding:32px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.15);margin:20px 0;">
-            <h3 style="margin-top:0;color:#FBBF24;font-size:21px;font-weight:800;"><?php echo esc_html($atts['title']); ?></h3>
-            <p style="color:#e2e8f0;margin-bottom:20px;font-size:14.5px;">Chuyên viên tư vấn cao cấp sẽ gửi trực tiếp bộ tài liệu PDF nét cao & Bảng tính dòng tiền qua Zalo/Email trong 3 phút (Cam kết bảo mật 100%).</p>
+        <div class="kbds-lead-box" style="background:linear-gradient(135deg,#0a192f 0%,#164675 100%);color:#fff;padding:32px;border-radius:14px;box-shadow:0 12px 35px rgba(0,0,0,0.2);margin:24px 0;border:1px solid rgba(212,175,55,0.3);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+                <h3 style="margin:0;color:#FBBF24;font-size:21px;font-weight:800;"><?php echo esc_html($atts['title']); ?></h3>
+                <span style="font-size:12px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);padding:4px 10px;border-radius:20px;">
+                    ✦ <?php echo esc_html($type_badge_label); ?>
+                </span>
+            </div>
+            <p style="color:#e2e8f0;margin-bottom:20px;font-size:14.5px;line-height:1.6;">Chuyên viên tư vấn cao cấp sẽ gửi trực tiếp bộ tài liệu PDF nét cao & Bảng tính dòng tiền dự án <strong><?php echo esc_html($atts['project']); ?></strong> qua Zalo/Email trong 3 phút (Cam kết bảo mật 100%).</p>
 
             <?php if ($submitted) : ?>
-                <div style="background:#1b8a4b;color:#fff;padding:16px 20px;border-radius:8px;font-weight:700;font-size:15px;">
-                    ✔ Đăng ký thành công! Hệ thống đã ghi nhận yêu cầu và bộ phận kinh doanh sẽ liên hệ gửi tài liệu cho quý khách ngay lập tức.
+                <div style="background:#1b8a4b;color:#fff;padding:16px 20px;border-radius:8px;font-weight:700;font-size:15px;line-height:1.5;">
+                    ✔ Đăng ký thành công<?php echo $submitted_demand ? ' cho <strong>' . esc_html($submitted_demand) . '</strong>' : ''; ?>! Hệ thống đã ghi nhận yêu cầu và bộ phận kinh doanh sẽ liên hệ gửi trọn bộ tài liệu cho quý khách ngay lập tức.
                 </div>
             <?php else : ?>
-                <form method="post" style="display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:12px;align-items:center;">
+                <form method="post" class="kbds-lead-grid-form" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)) auto;gap:12px;align-items:center;">
                     <?php wp_nonce_field('kbds_submit_lead', 'kbds_lead_nonce'); ?>
                     <input type="hidden" name="kbds_project" value="<?php echo esc_attr($atts['project']); ?>" />
+                    <input type="hidden" name="kbds_type" value="<?php echo esc_attr($product_type); ?>" />
+                    
                     <div>
-                        <input type="text" name="kbds_name" placeholder="Họ và tên *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#000;" />
+                        <input type="text" name="kbds_name" placeholder="Họ và tên *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
                     </div>
                     <div>
-                        <input type="tel" name="kbds_phone" placeholder="Số điện thoại / Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#000;" />
+                        <input type="tel" name="kbds_phone" placeholder="Số điện thoại / Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
                     </div>
                     <div>
-                        <input type="email" name="kbds_email" placeholder="Email nhận file PDF (tùy chọn)" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#000;" />
+                        <select name="kbds_demand" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:600;box-sizing:border-box;margin:0;cursor:pointer;-webkit-appearance:menulist;">
+                            <option value="" disabled <?php echo empty($atts['demand']) ? 'selected' : ''; ?>>-- Chọn nhu cầu quan tâm * --</option>
+                            <?php foreach ($demand_options as $val => $label) : ?>
+                                <option value="<?php echo esc_attr($val); ?>" <?php selected($atts['demand'], $val); ?>>
+                                    <?php echo esc_html($label); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div>
-                        <button type="submit" name="kbds_lead_submit" value="1" style="width:100%;padding:12px 24px;background:#F59E0B;color:#000;border:none;border-radius:8px;font-weight:800;font-size:14.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;">
+                        <input type="email" name="kbds_email" placeholder="Email nhận file PDF (tùy chọn)" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;box-sizing:border-box;margin:0;" />
+                    </div>
+                    <div class="kbds-form-submit-col">
+                        <button type="submit" name="kbds_lead_submit" value="1" style="width:100%;padding:12px 24px;background:#F59E0B;color:#000;border:none;border-radius:8px;font-weight:800;font-size:14.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;box-shadow:0 4px 12px rgba(245,158,11,0.35);">
                             GỬI YÊU CẦU →
                         </button>
                     </div>
@@ -1831,6 +2052,39 @@ class Sunshine_Project_Manager {
             #footer .absolute-footer ul.footer-nav {
                 justify-content: center !important;
                 gap: 8px 14px !important;
+            }
+        }
+        /* 15. RESPONSIVE LEAD FORMS (CAO TẦNG & THẤP TẦNG) */
+        .kbds-lead-grid-form select,
+        .kbds-lead-grid-form input,
+        .kbds-quick-lead-card select,
+        .kbds-quick-lead-card input {
+            transition: all 0.2s ease !important;
+        }
+        .kbds-lead-grid-form select:focus,
+        .kbds-lead-grid-form input:focus,
+        .kbds-quick-lead-card select:focus,
+        .kbds-quick-lead-card input:focus {
+            border-color: #d4af37 !important;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+            outline: none !important;
+        }
+        @media (max-width: 991px) {
+            .kbds-lead-grid-form {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 12px !important;
+            }
+            .kbds-lead-grid-form .kbds-form-submit-col {
+                grid-column: span 2 !important;
+            }
+        }
+        @media (max-width: 600px) {
+            .kbds-lead-grid-form {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            .kbds-lead-grid-form .kbds-form-submit-col {
+                grid-column: span 1 !important;
             }
         }
         </style>
