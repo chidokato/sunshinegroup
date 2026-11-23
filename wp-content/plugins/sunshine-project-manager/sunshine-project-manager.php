@@ -52,6 +52,9 @@ class Sunshine_Project_Manager {
         add_action( 'manage_du_an_posts_custom_column', [ __CLASS__, 'admin_column_content' ], 10, 2 );
         add_action( 'restrict_manage_posts', [ __CLASS__, 'admin_filter_dropdowns' ] );
 
+        // Menu quản lý Leads khách hàng đăng ký
+        add_action( 'admin_menu', [ __CLASS__, 'register_admin_menus' ] );
+
         // Meta Box thông tin nhanh cho dự án
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
         add_action( 'save_post_du_an', [ __CLASS__, 'save_meta_boxes' ] );
@@ -867,6 +870,219 @@ class Sunshine_Project_Manager {
         @wp_mail($to_emails, $subject, $body, $headers);
     }
 
+    public static function register_admin_menus() {
+        $leads = get_option('sunshine_customer_leads', []);
+        $unread_count = is_array($leads) ? count($leads) : 0;
+        $menu_title = 'Khách Đăng Ký';
+        if ($unread_count > 0) {
+            $menu_title .= ' <span class="awaiting-mod count-' . $unread_count . '"><span class="pending-count" style="background:#d4af37;color:#0b2246;font-weight:bold;padding:1px 6px;border-radius:10px;">' . $unread_count . '</span></span>';
+        }
+
+        add_submenu_page(
+            'edit.php?post_type=du_an',
+            'Danh Sách Khách Hàng Đăng Ký (Leads)',
+            $menu_title,
+            'manage_options',
+            'sunshine-customer-leads',
+            [ __CLASS__, 'render_leads_admin_page' ]
+        );
+    }
+
+    public static function render_leads_admin_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Bạn không có quyền truy cập trang này.');
+        }
+
+        $leads = get_option('sunshine_customer_leads', []);
+        if (!is_array($leads)) {
+            $leads = [];
+        }
+
+        // Xử lý xuất Excel / CSV
+        if (isset($_GET['action']) && $_GET['action'] === 'export_csv') {
+            check_admin_referer('sunshine_export_leads');
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=danh-sach-khach-hang-' . date('Y-m-d') . '.csv');
+            $output = fopen('php://output', 'w');
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM cho Excel
+            fputcsv($output, ['STT', 'Thời gian', 'Họ và tên', 'Số điện thoại', 'Nhu cầu quan tâm', 'Dòng sản phẩm', 'Dự án', 'Email', 'Link nguồn', 'IP']);
+            $i = 1;
+            foreach ($leads as $l) {
+                fputcsv($output, [
+                    $i++,
+                    $l['time'] ?? '',
+                    $l['name'] ?? '',
+                    $l['phone'] ?? '',
+                    $l['demand'] ?? '',
+                    (($l['type'] ?? '') === 'thap_tang') ? 'Thấp tầng' : 'Cao tầng',
+                    $l['project'] ?? '',
+                    $l['email'] ?? '',
+                    $l['source_url'] ?? '',
+                    $l['ip'] ?? ''
+                ]);
+            }
+            fclose($output);
+            exit;
+        }
+
+        // Xử lý xóa 1 lead
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['index'])) {
+            check_admin_referer('sunshine_delete_lead');
+            $idx = (int) $_GET['index'];
+            if (isset($leads[$idx])) {
+                array_splice($leads, $idx, 1);
+                update_option('sunshine_customer_leads', $leads);
+            }
+            wp_safe_redirect(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&deleted=1'));
+            exit;
+        }
+
+        // Xử lý xóa tất cả
+        if (isset($_GET['action']) && $_GET['action'] === 'clear_all') {
+            check_admin_referer('sunshine_clear_leads');
+            update_option('sunshine_customer_leads', []);
+            wp_safe_redirect(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&cleared=1'));
+            exit;
+        }
+
+        $total = count($leads);
+        $cao_tang_count = 0;
+        $thap_tang_count = 0;
+        foreach ($leads as $l) {
+            if (($l['type'] ?? '') === 'thap_tang') {
+                $thap_tang_count++;
+            } else {
+                $cao_tang_count++;
+            }
+        }
+        $admin_email = get_option('admin_email');
+        ?>
+        <div class="wrap" style="max-width:1250px;margin-top:20px;">
+            <h1 style="display:flex;align-items:center;gap:10px;font-size:24px;font-weight:700;color:#0b2246;">
+                <span class="dashicons dashicons-id-alt" style="font-size:30px;width:30px;height:30px;color:#d4af37;"></span>
+                Quản Lý Khách Hàng Đăng Ký (Leads Nhận Báo Giá)
+            </h1>
+
+            <div style="background:#fff;border-left:4px solid #d4af37;padding:16px 20px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin:20px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+                <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <span style="font-size:12px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Tổng lượt đăng ký</span>
+                        <strong style="font-size:22px;color:#0b2246;"><?php echo $total; ?> khách</strong>
+                    </div>
+                    <div style="border-left:1px solid #e2e8f0;padding-left:24px;">
+                        <span style="font-size:12px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Căn hộ Cao Tầng</span>
+                        <strong style="font-size:20px;color:#0284c7;"><?php echo $cao_tang_count; ?></strong>
+                    </div>
+                    <div style="border-left:1px solid #e2e8f0;padding-left:24px;">
+                        <span style="font-size:12px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Sản phẩm Thấp Tầng</span>
+                        <strong style="font-size:20px;color:#16a34a;"><?php echo $thap_tang_count; ?></strong>
+                    </div>
+                    <div style="border-left:1px solid #e2e8f0;padding-left:24px;">
+                        <span style="font-size:12px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Email nhận thông báo</span>
+                        <code style="background:#f1f5f9;color:#0f172a;font-size:13px;padding:3px 8px;border-radius:4px;">luumui91@gmail.com, <?php echo esc_html($admin_email); ?></code>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <?php if ($total > 0) : ?>
+                        <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=export_csv'), 'sunshine_export_leads'); ?>" class="button button-primary" style="background:#0b2246;border-color:#0b2246;font-weight:700;">
+                            📥 Xuất File Excel (CSV)
+                        </a>
+                        <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=clear_all'), 'sunshine_clear_leads'); ?>" class="button" onclick="return confirm('Bạn có chắc chắn muốn xóa tất cả danh sách khách hàng này không?');" style="color:#dc2626;">
+                            Xóa tất cả
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (isset($_GET['deleted'])) : ?>
+                <div class="notice notice-success is-dismissible"><p>Đã xóa thành công thông tin khách hàng.</p></div>
+            <?php endif; ?>
+            <?php if (isset($_GET['cleared'])) : ?>
+                <div class="notice notice-success is-dismissible"><p>Đã làm trống danh sách đăng ký.</p></div>
+            <?php endif; ?>
+
+            <?php if (empty($leads)) : ?>
+                <div style="background:#fff;padding:60px 20px;text-align:center;border-radius:8px;border:1px dashed #cbd5e1;">
+                    <div style="font-size:48px;margin-bottom:10px;">📋</div>
+                    <h3 style="margin:0 0 8px;color:#0f172a;">Chưa có lượt đăng ký mới</h3>
+                    <p style="color:#64748b;margin:0;">Khi khách hàng để lại thông tin tại bất kỳ form đăng ký nào trên website, dữ liệu sẽ tự động xuất hiện tại đây và đồng thời gửi thông báo tới email của bạn.</p>
+                </div>
+            <?php else : ?>
+                <table class="wp-list-table widefat fixed striped posts" style="border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-top:16px;">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;text-align:center;">#</th>
+                            <th style="width:140px;">Thời gian</th>
+                            <th style="width:190px;">Khách hàng</th>
+                            <th style="width:150px;">Nhu cầu quan tâm</th>
+                            <th style="width:110px;">Phân khúc</th>
+                            <th style="width:180px;">Dự án</th>
+                            <th style="width:180px;">Email</th>
+                            <th>Nguồn trang</th>
+                            <th style="width:60px;text-align:center;">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($leads as $idx => $lead) : 
+                            $phone = preg_replace('/[^0-9]/', '', $lead['phone'] ?? '');
+                            $is_thap_tang = ($lead['type'] ?? '') === 'thap_tang';
+                        ?>
+                            <tr>
+                                <td style="text-align:center;font-weight:700;color:#94a3b8;"><?php echo $idx + 1; ?></td>
+                                <td style="font-size:12.5px;color:#64748b;">
+                                    <?php echo esc_html($lead['time'] ?? ''); ?>
+                                </td>
+                                <td>
+                                    <strong style="font-size:14px;color:#0b2246;display:block;margin-bottom:4px;"><?php echo esc_html($lead['name'] ?? 'Chưa rõ'); ?></strong>
+                                    <div style="display:flex;gap:6px;align-items:center;">
+                                        <a href="tel:<?php echo esc_attr($phone); ?>" style="font-weight:700;color:#0284c7;text-decoration:none;">
+                                            📞 <?php echo esc_html($lead['phone'] ?? ''); ?>
+                                        </a>
+                                        <?php if ($phone) : ?>
+                                            <a href="https://zalo.me/<?php echo esc_attr($phone); ?>" target="_blank" style="display:inline-block;background:#0068ff;color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:3px;text-decoration:none;">Zalo</a>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid #fde68a;">
+                                        <?php echo esc_html($lead['demand'] ?? 'Chung'); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($is_thap_tang) : ?>
+                                        <span style="display:inline-block;background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">Thấp tầng</span>
+                                    <?php else : ?>
+                                        <span style="display:inline-block;background:#e0f2fe;color:#075985;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">Cao tầng</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <strong style="color:#0f172a;font-size:13px;"><?php echo esc_html($lead['project'] ?? 'Dự án'); ?></strong>
+                                </td>
+                                <td style="font-size:13px;">
+                                    <?php echo !empty($lead['email']) ? '<a href="mailto:' . esc_attr($lead['email']) . '">' . esc_html($lead['email']) . '</a>' : '<span style="color:#94a3b8;">—</span>'; ?>
+                                </td>
+                                <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?php if (!empty($lead['source_url'])) : ?>
+                                        <a href="<?php echo esc_url($lead['source_url']); ?>" target="_blank" title="<?php echo esc_attr($lead['source_url']); ?>"><?php echo esc_html($lead['source_url']); ?></a>
+                                    <?php else : ?>
+                                        <span style="color:#94a3b8;">Trang web</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=delete&index=' . $idx), 'sunshine_delete_lead'); ?>" onclick="return confirm('Xóa khách hàng này?');" style="color:#ef4444;text-decoration:none;font-size:16px;" title="Xóa">
+                                        &times;
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
     public static function render_kbds_lead_form_cao_tang($atts) {
         $atts = is_array($atts) ? $atts : [];
         $atts['type'] = 'cao_tang';
@@ -990,30 +1206,56 @@ class Sunshine_Project_Manager {
         $thumb = get_the_post_thumbnail_url($pid, 'full') ?: home_url('/wp-content/uploads/2026/11/tong-quan-hinode-Solera-pham-hung.jpg');
         $desc = get_post_meta($pid, 'rank_math_description', true) ?: wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $pid)), 35);
 
-        $graph = [
-            [
-                '@type'         => ['ApartmentComplex', 'RealEstateListing'],
-                '@id'           => $url . '#project',
-                'name'          => $title,
-                'alternateName' => ($pid == 964) ? [
-                    'Dự án Hinode Solera Phạm Hùng',
-                    'Chung cư Hinode Solera Phạm Hùng',
-                    'Hinode Solera',
-                    'Chung cư Hinode Solera',
-                    'Hinode Solera 28A Phạm Hùng',
-                ] : [$title],
-                'url'           => $url,
-                'image'         => $thumb,
-                'description'   => $desc,
-                'address'       => [
-                    '@type'           => 'PostalAddress',
-                    'streetAddress'   => ($pid == 964) ? 'Số 28A Phạm Hùng, Phường Mỹ Đình 2, Quận Nam Từ Liêm' : 'Hà Nội',
-                    'addressLocality' => 'Hà Nội',
-                    'addressRegion'   => 'Hà Nội',
-                    'addressCountry'  => 'VN',
-                ],
-            ],
+        // Build the address from project data so new listings don't inherit a
+        // hard-coded Hanoi address. Keep the legacy Hinode address until its
+        // fields are migrated to the structured project meta below.
+        $street_address = get_post_meta($pid, '_project_street_address', true);
+        $address_locality = get_post_meta($pid, '_project_address_locality', true);
+        $address_region = get_post_meta($pid, '_project_address_region', true);
+        $address_country = get_post_meta($pid, '_project_address_country', true);
+
+        if (964 === (int) $pid) {
+            $street_address = $street_address ?: 'Số 28A Phạm Hùng, Phường Mỹ Đình 2, Quận Nam Từ Liêm';
+            $address_locality = $address_locality ?: 'Hà Nội';
+            $address_region = $address_region ?: 'Hà Nội';
+        } elseif ( empty($street_address) && empty($address_locality) && empty($address_region) ) {
+            $address_locality = get_post_meta($pid, '_project_location', true);
+        }
+
+        $address = ['@type' => 'PostalAddress'];
+        if ($street_address) {
+            $address['streetAddress'] = $street_address;
+        }
+        if ($address_locality) {
+            $address['addressLocality'] = $address_locality;
+        }
+        if ($address_region) {
+            $address['addressRegion'] = $address_region;
+        }
+        if ($address_country || count($address) > 1) {
+            $address['addressCountry'] = $address_country ?: 'VN';
+        }
+
+        $project_entity = [
+            '@type'         => ['ApartmentComplex', 'RealEstateListing'],
+            '@id'           => $url . '#project',
+            'name'          => $title,
+            'alternateName' => ($pid == 964) ? [
+                'Dự án Hinode Solera Phạm Hùng',
+                'Chung cư Hinode Solera Phạm Hùng',
+                'Hinode Solera',
+                'Chung cư Hinode Solera',
+                'Hinode Solera 28A Phạm Hùng',
+            ] : [$title],
+            'url'           => $url,
+            'image'         => $thumb,
+            'description'   => $desc,
         ];
+        if (count($address) > 1) {
+            $project_entity['address'] = $address;
+        }
+
+        $graph = [$project_entity];
 
         if ($pid == 964) {
             $graph[] = [
