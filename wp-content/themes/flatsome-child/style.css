@@ -838,7 +838,6 @@ td,
 th, 
 input, 
 textarea, 
-select,
 .entry-content, 
 .entry-summary, 
 .from_the_blog_excerpt,
@@ -847,6 +846,14 @@ select,
     font-size: 15.5px !important;
     line-height: 1.72 !important;
     color: #334155;
+    -webkit-font-smoothing: antialiased;
+}
+
+select {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 14.5px !important;
+    line-height: normal !important;
+    color: #0f172a !important;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -970,9 +977,29 @@ h6,
 
 .kbds-lead-box input,
 .kbds-lead-box select,
-.kbds-lead-box textarea {
+.kbds-lead-box textarea,
+.kbds-quick-lead-card select,
+.kbds-quick-lead-card input {
     background: #FFFFFF !important;
     color: #0F172A !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+}
+
+.kbds-lead-box select,
+.kbds-quick-lead-card select,
+select[name="kbds_demand"] {
+    line-height: 46px !important;
+    padding: 0 40px 0 14px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18' fill='%23475569'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    background-size: 18px 18px !important;
 }
 
 /* 3. MENU & NÚT BẤM BUTTONS (PLUS JAKARTA SANS / MONTSERRAT 600 - 700) */

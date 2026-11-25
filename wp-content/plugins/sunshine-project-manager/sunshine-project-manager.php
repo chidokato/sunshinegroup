@@ -1171,11 +1171,11 @@ class Sunshine_Project_Manager {
                     <input type="hidden" name="kbds_project" value="<?php echo esc_attr($atts['project']); ?>" />
                     <input type="hidden" name="kbds_type" value="<?php echo esc_attr($product_type); ?>" />
                     
-                    <input type="text" name="kbds_name" placeholder="Họ và tên quý khách *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:500;margin:0;box-sizing:border-box;" />
+                    <input type="text" name="kbds_name" placeholder="Họ và tên quý khách *" required style="width:100%;height:48px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14.5px;font-weight:500;margin:0;box-sizing:border-box;" />
                     
-                    <input type="tel" name="kbds_phone" placeholder="Số điện thoại nhận Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:500;margin:0;box-sizing:border-box;" />
+                    <input type="tel" name="kbds_phone" placeholder="Số điện thoại nhận Zalo *" required pattern="[0-9]{9,11}" style="width:100%;height:48px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14.5px;font-weight:500;margin:0;box-sizing:border-box;" />
                     
-                    <select name="kbds_demand" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.98);color:#0f172a;font-size:14px;font-weight:600;margin:0;box-sizing:border-box;cursor:pointer;-webkit-appearance:menulist;">
+                    <select name="kbds_demand" required style="width:100%;height:48px;min-height:48px;line-height:46px;padding:0 36px 0 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background-color:#ffffff;color:#0f172a;font-size:14.5px;font-weight:600;margin:0;box-sizing:border-box;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'%23475569\'%3E%3Cpath d=\'M7 10l5 5 5-5z\'/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;">
                         <option value="" disabled <?php echo empty($atts['demand']) ? 'selected' : ''; ?>>-- Chọn nhu cầu quan tâm * --</option>
                         <?php foreach ($demand_options as $val => $label) : ?>
                             <option value="<?php echo esc_attr($val); ?>" <?php selected($atts['demand'], $val); ?>>
@@ -1359,13 +1359,13 @@ class Sunshine_Project_Manager {
                     <input type="hidden" name="kbds_type" value="<?php echo esc_attr($product_type); ?>" />
                     
                     <div>
-                        <input type="text" name="kbds_name" placeholder="Họ và tên *" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
+                        <input type="text" name="kbds_name" placeholder="Họ và tên *" required style="width:100%;height:48px;padding:0 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14.5px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
                     </div>
                     <div>
-                        <input type="tel" name="kbds_phone" placeholder="Số điện thoại / Zalo *" required pattern="[0-9]{9,11}" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
+                        <input type="tel" name="kbds_phone" placeholder="Số điện thoại / Zalo *" required pattern="[0-9]{9,11}" style="width:100%;height:48px;padding:0 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14.5px;background:#fff;color:#0f172a;font-weight:500;box-sizing:border-box;margin:0;" />
                     </div>
                     <div>
-                        <select name="kbds_demand" required style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;font-weight:600;box-sizing:border-box;margin:0;cursor:pointer;-webkit-appearance:menulist;">
+                        <select name="kbds_demand" required style="width:100%;height:48px;min-height:48px;line-height:46px;padding:0 36px 0 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14.5px;background:#fff;color:#0f172a;font-weight:600;box-sizing:border-box;margin:0;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'%23475569\'%3E%3Cpath d=\'M7 10l5 5 5-5z\'/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;">
                             <option value="" disabled <?php echo empty($atts['demand']) ? 'selected' : ''; ?>>-- Chọn nhu cầu quan tâm * --</option>
                             <?php foreach ($demand_options as $val => $label) : ?>
                                 <option value="<?php echo esc_attr($val); ?>" <?php selected($atts['demand'], $val); ?>>
@@ -1375,10 +1375,10 @@ class Sunshine_Project_Manager {
                         </select>
                     </div>
                     <div>
-                        <input type="email" name="kbds_email" placeholder="Email nhận file PDF (tùy chọn)" style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;color:#0f172a;box-sizing:border-box;margin:0;" />
+                        <input type="email" name="kbds_email" placeholder="Email nhận file PDF (tùy chọn)" style="width:100%;height:48px;padding:0 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:14.5px;background:#fff;color:#0f172a;box-sizing:border-box;margin:0;" />
                     </div>
                     <div class="kbds-form-submit-col">
-                        <button type="submit" name="kbds_lead_submit" value="1" style="width:100%;padding:12px 24px;background:#F59E0B;color:#000;border:none;border-radius:8px;font-weight:800;font-size:14.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;box-shadow:0 4px 12px rgba(245,158,11,0.35);">
+                        <button type="submit" name="kbds_lead_submit" value="1" style="width:100%;height:48px;line-height:48px;padding:0 24px;background:#F59E0B;color:#000;border:none;border-radius:8px;font-weight:800;font-size:14.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;box-shadow:0 4px 12px rgba(245,158,11,0.35);display:inline-flex;align-items:center;justify-content:center;">
                             GỬI YÊU CẦU →
                         </button>
                     </div>
@@ -2345,19 +2345,109 @@ class Sunshine_Project_Manager {
             }
         }
         /* 15. RESPONSIVE LEAD FORMS (CAO TẦNG & THẤP TẦNG) */
-        .kbds-lead-grid-form select,
-        .kbds-lead-grid-form input,
+        .kbds-lead-box,
+        .kbds-quick-lead-card {
+            box-sizing: border-box !important;
+        }
+        .kbds-lead-box *,
+        .kbds-quick-lead-card * {
+            box-sizing: border-box !important;
+        }
+        .kbds-lead-box select,
         .kbds-quick-lead-card select,
-        .kbds-quick-lead-card input {
+        .kbds-lead-grid-form select,
+        select[name="kbds_demand"] {
+            display: block !important;
+            width: 100% !important;
+            height: 48px !important;
+            min-height: 48px !important;
+            max-height: 48px !important;
+            line-height: 46px !important;
+            padding: 0 40px 0 14px !important;
+            font-size: 14.5px !important;
+            font-weight: 600 !important;
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18' fill='%23475569'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 18px 18px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            vertical-align: middle !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
             transition: all 0.2s ease !important;
         }
-        .kbds-lead-grid-form select:focus,
-        .kbds-lead-grid-form input:focus,
-        .kbds-quick-lead-card select:focus,
-        .kbds-quick-lead-card input:focus {
-            border-color: #d4af37 !important;
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+        .kbds-lead-box select option,
+        select[name="kbds_demand"] option {
+            padding: 10px 14px !important;
+            font-size: 14.5px !important;
+            color: #0f172a !important;
+            background: #ffffff !important;
+        }
+        .kbds-lead-box input[type="text"],
+        .kbds-lead-box input[type="tel"],
+        .kbds-lead-box input[type="email"],
+        .kbds-quick-lead-card input[type="text"],
+        .kbds-quick-lead-card input[type="tel"],
+        .kbds-quick-lead-card input[type="email"],
+        .kbds-lead-grid-form input {
+            display: block !important;
+            width: 100% !important;
+            height: 48px !important;
+            min-height: 48px !important;
+            max-height: 48px !important;
+            line-height: 46px !important;
+            padding: 0 14px !important;
+            font-size: 14.5px !important;
+            font-weight: 500 !important;
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
             outline: none !important;
+            transition: all 0.2s ease !important;
+        }
+        .kbds-lead-box select:focus,
+        .kbds-lead-box input:focus,
+        .kbds-quick-lead-card select:focus,
+        .kbds-quick-lead-card input:focus,
+        .kbds-lead-grid-form select:focus,
+        .kbds-lead-grid-form input:focus {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+            background-color: #ffffff !important;
+        }
+        .kbds-lead-box button[type="submit"],
+        .kbds-lead-grid-form button[type="submit"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 48px !important;
+            min-height: 48px !important;
+            line-height: 48px !important;
+            padding: 0 28px !important;
+            font-size: 14.5px !important;
+            font-weight: 800 !important;
+            border-radius: 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+            transition: all 0.2s ease !important;
+        }
+        .kbds-lead-box button[type="submit"]:hover,
+        .kbds-lead-grid-form button[type="submit"]:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+            background: #d97706 !important;
         }
         @media (max-width: 991px) {
             .kbds-lead-grid-form {
