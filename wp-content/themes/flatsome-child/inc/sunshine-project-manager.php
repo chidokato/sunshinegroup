@@ -20,7 +20,9 @@ class Sunshine_Project_Manager {
         add_action( 'init', [ __CLASS__, 'add_default_terms' ], 10 );
         
         // Bật Flatsome UX Builder cho post type du_an
-        add_filter( 'flatsome_ux_builder_post_types', [ __CLASS__, 'enable_ux_builder' ] );
+        add_action( 'init', [ __CLASS__, 'enable_ux_builder' ], 20 );
+        add_filter( 'post_row_actions', [ __CLASS__, 'add_ux_builder_row_action' ], 20, 2 );
+        add_filter( 'du_an_row_actions', [ __CLASS__, 'add_ux_builder_row_action' ], 20, 2 );
 
         // Hỗ trợ Thẻ Tags (post_tag) cho post type du_an
         register_taxonomy_for_object_type( 'post_tag', 'du_an' );
@@ -246,11 +248,41 @@ class Sunshine_Project_Manager {
     /**
      * 3. Bật Flatsome UX Builder cho post type du_an
      */
-    public static function enable_ux_builder( $post_types ) {
-        if ( is_array( $post_types ) && ! in_array( 'du_an', $post_types, true ) ) {
-            $post_types[] = 'du_an';
+    public static function enable_ux_builder() {
+        if ( function_exists( 'add_ux_builder_post_type' ) ) {
+            add_ux_builder_post_type( 'du_an' );
         }
-        return $post_types;
+        $GLOBALS['_ux_builder_post_types']['du_an'] = true;
+    }
+
+    /**
+     * Thêm nút "UX Builder" vào danh sách hành động từng dòng trong edit.php?post_type=du_an
+     */
+    public static function add_ux_builder_row_action( $actions, $post ) {
+        if ( empty( $post ) || $post->post_type !== 'du_an' ) {
+            return $actions;
+        }
+        if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+            return $actions;
+        }
+
+        $url = admin_url( 'post.php?post=' . $post->ID . '&action=edit&app=uxbuilder&type=editor' );
+        $ux_link = '<a href="' . esc_url( $url ) . '" style="color:#0073aa;font-weight:700;">UX Builder</a>';
+
+        // Chèn vào ngay sau 'Chỉnh sửa' (edit)
+        $new_actions = [];
+        $inserted = false;
+        foreach ( $actions as $key => $val ) {
+            $new_actions[ $key ] = $val;
+            if ( $key === 'edit' ) {
+                $new_actions['uxbuilder'] = $ux_link;
+                $inserted = true;
+            }
+        }
+        if ( ! $inserted ) {
+            $new_actions['uxbuilder'] = $ux_link;
+        }
+        return $new_actions;
     }
 
     /**

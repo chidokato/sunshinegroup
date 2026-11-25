@@ -20,6 +20,16 @@ remove_action('wp_head', 'wp_generator');
 add_theme_support( 'title-tag' );
 
 /**
+ * Bật Flatsome UX Builder cho post type du_an
+ */
+add_action( 'init', function() {
+    if ( function_exists( 'add_ux_builder_post_type' ) ) {
+        add_ux_builder_post_type( 'du_an' );
+    }
+    $GLOBALS['_ux_builder_post_types']['du_an'] = true;
+}, 20 );
+
+/**
  * Chặn chuyển hướng canonical ra domain online khi đang chạy trên localhost
  */
 add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {

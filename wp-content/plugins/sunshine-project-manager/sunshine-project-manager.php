@@ -20,7 +20,7 @@ class Sunshine_Project_Manager {
         add_action( 'init', [ __CLASS__, 'add_default_terms' ], 10 );
         
         // Bật Flatsome UX Builder cho post type du_an
-        add_filter( 'flatsome_ux_builder_post_types', [ __CLASS__, 'enable_ux_builder' ] );
+        add_action( 'init', [ __CLASS__, 'enable_ux_builder' ], 20 );
 
         // Hỗ trợ Thẻ Tags (post_tag) cho post type du_an
         register_taxonomy_for_object_type( 'post_tag', 'du_an' );
@@ -256,11 +256,11 @@ class Sunshine_Project_Manager {
     /**
      * 3. Bật Flatsome UX Builder cho post type du_an
      */
-    public static function enable_ux_builder( $post_types ) {
-        if ( is_array( $post_types ) && ! in_array( 'du_an', $post_types, true ) ) {
-            $post_types[] = 'du_an';
+    public static function enable_ux_builder() {
+        if ( function_exists( 'add_ux_builder_post_type' ) ) {
+            add_ux_builder_post_type( 'du_an' );
         }
-        return $post_types;
+        $GLOBALS['_ux_builder_post_types']['du_an'] = true;
     }
 
     /**
