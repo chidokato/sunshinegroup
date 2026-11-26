@@ -48,6 +48,14 @@ class Sunshine_Project_Manager {
         // Tự động chuyển hướng 301 từ URL cũ (page) sang URL mới /du-an/
         add_action( 'template_redirect', [ __CLASS__, 'handle_301_redirects' ], 1 );
 
+        // Tối ưu hóa Title & Meta Description chuẩn CTR cao cho Dự Án BĐS
+        add_filter( 'rank_math/frontend/title', [ __CLASS__, 'filter_project_seo_title' ], 99 );
+        add_filter( 'rank_math/frontend/description', [ __CLASS__, 'filter_project_seo_description' ], 99 );
+        add_filter( 'pre_get_document_title', [ __CLASS__, 'filter_project_seo_title' ], 99 );
+        add_filter( 'wp_title', [ __CLASS__, 'filter_project_seo_title' ], 99 );
+        add_filter( 'rank_math/opengraph/facebook/title', [ __CLASS__, 'filter_project_seo_title' ], 99 );
+        add_filter( 'rank_math/opengraph/twitter/title', [ __CLASS__, 'filter_project_seo_title' ], 99 );
+
         // Quản lý cột hiển thị và bộ lọc trong Admin
         add_filter( 'manage_du_an_posts_columns', [ __CLASS__, 'admin_columns' ] );
         add_action( 'manage_du_an_posts_custom_column', [ __CLASS__, 'admin_column_content' ], 10, 2 );
@@ -261,6 +269,42 @@ class Sunshine_Project_Manager {
             add_ux_builder_post_type( 'du_an' );
         }
         $GLOBALS['_ux_builder_post_types']['du_an'] = true;
+    }
+
+    /**
+     * Tối ưu SEO Title kích thích CTR cao cho Dự Án BĐS
+     */
+    public static function filter_project_seo_title( $title ) {
+        $post_id = get_queried_object_id() ?: get_the_ID();
+        if ( $post_id && get_post_type( $post_id ) === 'du_an' ) {
+            $custom_title = get_post_meta( $post_id, 'rank_math_title', true );
+            if ( ! empty( $custom_title ) ) {
+                return $custom_title;
+            }
+            $clean_title = get_the_title( $post_id );
+            $clean_title = html_entity_decode( $clean_title, ENT_QUOTES, 'UTF-8' );
+            $clean_title = preg_replace( '/\s*[-–|].*$/u', '', $clean_title );
+            return trim( $clean_title ) . ' – Bảng Giá Gốc CĐT & CSBH [2026]';
+        }
+        return $title;
+    }
+
+    /**
+     * Tối ưu Meta Description chuẩn SEO cho Dự Án BĐS
+     */
+    public static function filter_project_seo_description( $desc ) {
+        $post_id = get_queried_object_id() ?: get_the_ID();
+        if ( $post_id && get_post_type( $post_id ) === 'du_an' ) {
+            $custom_desc = get_post_meta( $post_id, 'rank_math_description', true );
+            if ( ! empty( $custom_desc ) ) {
+                return $custom_desc;
+            }
+            $clean_title = get_the_title( $post_id );
+            $clean_title = html_entity_decode( $clean_title, ENT_QUOTES, 'UTF-8' );
+            $clean_title = preg_replace( '/\s*[-–|].*$/u', '', $clean_title );
+            return 'Thông tin chính thức ' . trim( $clean_title ) . '. Cập nhật bảng giá gốc đợt 1, chính sách bán hàng 2026, mặt bằng thiết kế và hồ sơ pháp lý 1/500 trực tiếp từ Chủ đầu tư.';
+        }
+        return $desc;
     }
 
     /**
