@@ -335,6 +335,29 @@ class Sunshine_Project_Manager {
      * Đồng bộ Meta SEO Rank Math trực tiếp vào Database cho các dự án Cốt trụ
      */
     public static function sync_pillar_seo_meta_to_db() {
+                // Tự động điều chỉnh toàn bộ Website sang Múi giờ Việt Nam (Asia/Ho_Chi_Minh, GMT+7)
+        if ( get_option( 'timezone_string' ) !== 'Asia/Ho_Chi_Minh' ) {
+            update_option( 'timezone_string', 'Asia/Ho_Chi_Minh' );
+            update_option( 'gmt_offset', 7 );
+            update_option( 'date_format', 'd/m/Y' );
+            update_option( 'time_format', 'H:i' );
+        }
+
+        // Chuyển đổi toàn bộ thời gian của các Leads cũ sang chuẩn múi giờ Việt Nam
+        $existing_leads = get_option( 'sunshine_customer_leads', [] );
+        if ( is_array( $existing_leads ) && ! empty( $existing_leads ) ) {
+            $has_changed = false;
+            foreach ( $existing_leads as $k => $l ) {
+                if ( ! empty( $l['time'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}/', $l['time'] ) ) {
+                    $existing_leads[$k]['time'] = self::format_vn_time( $l['time'] );
+                    $has_changed = true;
+                }
+            }
+            if ( $has_changed ) {
+                update_option( 'sunshine_customer_leads', $existing_leads );
+            }
+        }
+
         // Đảm bảo email nhận thông báo mặc định và đồng bộ admin_email
         if ( ! get_option( 'sunshine_lead_notification_emails' ) ) {
             update_option( 'sunshine_lead_notification_emails', 'luumui1234@gmail.com' );
@@ -961,6 +984,34 @@ class Sunshine_Project_Manager {
     /**
      * Cấu hình PHPMailer gửi email qua SMTP chuẩn (Gmail / Hostinger / Brevo)
      */
+    /**
+     * Lấy thời gian hiện tại theo đúng Múi giờ Việt Nam (Asia/Ho_Chi_Minh, GMT+7)
+     */
+    public static function current_vn_time( $format = 'd/m/Y H:i:s' ) {
+        $tz = new DateTimeZone( 'Asia/Ho_Chi_Minh' );
+        $dt = new DateTime( 'now', $tz );
+        return $dt->format( $format );
+    }
+
+    /**
+     * Định dạng thời gian sang chuẩn Việt Nam (d/m/Y H:i:s) và chuyển đổi nếu đang là UTC
+     */
+    public static function format_vn_time( $time_str ) {
+        if ( empty( $time_str ) ) {
+            return '';
+        }
+        if ( preg_match( '/^\d{2}\/\d{2}\/\d{4}/', $time_str ) ) {
+            return $time_str;
+        }
+        try {
+            $dt = new DateTime( $time_str, new DateTimeZone( 'UTC' ) );
+            $dt->setTimezone( new DateTimeZone( 'Asia/Ho_Chi_Minh' ) );
+            return $dt->format( 'd/m/Y H:i:s' );
+        } catch ( Exception $e ) {
+            return $time_str;
+        }
+    }
+
     public static function configure_phpmailer_smtp( $phpmailer ) {
         $smtp_enabled = (int) get_option( 'sunshine_smtp_enabled', 0 );
         if ( ! $smtp_enabled ) {
@@ -1030,7 +1081,7 @@ class Sunshine_Project_Manager {
         $clean_phone  = preg_replace( '/[^0-9]/', '', $client_phone );
         $client_email = ! empty( $data['email'] ) ? $data['email'] : 'Không cung cấp';
         $source_url   = ! empty( $data['source_url'] ) ? $data['source_url'] : home_url();
-        $submit_time  = ! empty( $data['time'] ) ? $data['time'] : current_time( 'mysql' );
+        $submit_time  = ! empty( $data['time'] ) ? $data['time'] : self::current_vn_time();
 
         $subject = '🔔 [KHÁCH ĐĂNG KÝ MỚI] ' . $project_name . ' - ' . $client_name . ' (' . $client_phone . ')';
 
@@ -1125,7 +1176,7 @@ class Sunshine_Project_Manager {
         $error_capture = function( $error ) use ( &$last_error ) {
             $last_error = $error->get_error_message();
             update_option( 'sunshine_last_mail_error', [
-                'time'    => current_time( 'mysql' ),
+                'time'    => self::current_vn_time(),
                 'message' => $last_error,
             ] );
         };
@@ -1136,7 +1187,7 @@ class Sunshine_Project_Manager {
         remove_action( 'wp_mail_failed', $error_capture );
 
         update_option( 'sunshine_last_mail_status', [
-            'time'  => current_time( 'mysql' ),
+            'time'  => self::current_vn_time(),
             'to'    => implode( ', ', $to_emails ),
             'sent'  => $sent ? true : false,
             'error' => $sent ? '' : $last_error,
@@ -1168,7 +1219,7 @@ class Sunshine_Project_Manager {
               . "🎯 *Nhu cầu:* " . $demand_name . "\n"
               . "🏢 *Dự án:* " . $project_name . "\n"
               . "📧 *Email:* " . ( ! empty( $data['email'] ) ? $data['email'] : 'Không có' ) . "\n"
-              . "⏰ *Thời gian:* " . ( $data['time'] ?? current_time( 'mysql' ) ) . "\n"
+              . "⏰ *Thời gian:* " . ( $data['time'] ?? self::current_vn_time() ) . "\n"
               . "🌐 *Nguồn:* " . ( $data['source_url'] ?? '' );
 
         @wp_remote_post( "https://api.telegram.org/bot{$token}/sendMessage", [
@@ -1191,7 +1242,7 @@ class Sunshine_Project_Manager {
               . '<p style="color:#334155;font-size:15px;line-height:1.6;">Email kiểm tra này xác nhận rằng hệ thống gửi thư của website <strong>' . esc_html( get_bloginfo( 'name' ) ) . '</strong> đang hoạt động hoàn hảo.</p>'
               . '<p style="color:#334155;font-size:15px;line-height:1.6;">Từ bây giờ, bất cứ khi nào khách hàng điền form nhận báo giá trên website, thông báo sẽ đổ thẳng về hộp thư của bạn ngay lập tức.</p>'
               . '<hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">'
-              . '<p style="color:#64748b;font-size:12.5px;margin:0;">Thời gian gửi: ' . current_time( 'mysql' ) . '</p>'
+              . '<p style="color:#64748b;font-size:12.5px;margin:0;">Thời gian gửi: ' . self::current_vn_time() . '</p>'
               . '</div>';
 
         $from_name = get_option( 'sunshine_smtp_from_name', 'Sunshine Group BĐS' );
@@ -1411,7 +1462,7 @@ class Sunshine_Project_Manager {
             'status'     => 'new',
             'note'       => 'Đăng ký từ ' . $contact_form->title() . ( ! empty( $message ) ? ' | Nội dung: ' . $message : '' ),
             'source_url' => $source_url,
-            'time'       => current_time( 'mysql' ),
+            'time'       => self::current_vn_time(),
             'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
         ] );
     }
@@ -1438,7 +1489,7 @@ class Sunshine_Project_Manager {
               . "━━━━━━━━━━━━━━━━━━━\n"
               . "Website *" . get_bloginfo('name') . "* đã kết nối thành công với Telegram của bạn.\n"
               . "Từ bây giờ, mỗi khi có khách hàng đăng ký trên website, thông báo sẽ bắn trực tiếp về Telegram ngay tức thì!\n"
-              . "⏰ Thời gian: " . current_time('mysql');
+              . "⏰ Thời gian: " . self::current_vn_time();
 
         $response = @wp_remote_post("https://api.telegram.org/bot{$token}/sendMessage", [
             'body'    => [
@@ -1762,7 +1813,7 @@ class Sunshine_Project_Manager {
                                 <tr>
                                     <td style="text-align:center;font-weight:700;color:#94a3b8;"><?php echo $i++; ?></td>
                                     <td style="font-size:12px;color:#64748b;">
-                                        <?php echo esc_html($lead['time'] ?? ''); ?>
+                                        <?php echo esc_html(self::format_vn_time($lead['time'] ?? '')); ?>
                                     </td>
                                     <td>
                                         <strong style="font-size:14.5px;color:#0b2246;display:block;margin-bottom:4px;"><?php echo esc_html($lead['name'] ?? 'Khách Hàng'); ?></strong>
@@ -1876,7 +1927,7 @@ class Sunshine_Project_Manager {
                     'status'     => $status,
                     'note'       => $note,
                     'source_url' => $source,
-                    'time'       => current_time('mysql'),
+                    'time'       => self::current_vn_time(),
                     'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
                 ];
 
@@ -2310,7 +2361,7 @@ class Sunshine_Project_Manager {
                         'type'       => $product_type,
                         'demand'     => $demand,
                         'source_url' => is_singular() ? get_permalink() : home_url($_SERVER['REQUEST_URI'] ?? '/'),
-                        'time'       => current_time('mysql'),
+                        'time'       => self::current_vn_time(),
                         'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
                     ]);
                 }
@@ -2499,7 +2550,7 @@ class Sunshine_Project_Manager {
                         'type'       => $product_type,
                         'demand'     => $demand,
                         'source_url' => $atts['source_url'],
-                        'time'       => current_time('mysql'),
+                        'time'       => self::current_vn_time(),
                         'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
                     ]);
                 }
