@@ -227,6 +227,11 @@ aside#secondary .search-form button:hover {
     }
 }
 
+/* Ẩn text pill trên cụm liên hệ nổi, chỉ hiển thị icon tròn */
+.sunshine-floating-contact .sfc-text-pill {
+    display: none !important;
+}
+
 /* 3. Widget Bài Viết Mới Flatsome */
 .sidebar-main .widget_flatsome_recent_posts ul,
 aside#secondary .widget_flatsome_recent_posts ul {

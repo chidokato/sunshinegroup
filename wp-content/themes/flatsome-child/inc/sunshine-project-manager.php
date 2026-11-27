@@ -4234,10 +4234,10 @@ class Sunshine_Project_Manager {
             return;
         }
         ?>
-        <!-- SUNSHINE FLOATING HOTLINE & ZALO (LĂN THEO CHUỘT) -->
+        <!-- SUNSHINE FLOATING HOTLINE & ZALO (LĂN THEO CHUỘT) - CHỈ HIỆN ICON TRÒN -->
         <div class="sunshine-floating-contact" id="sunshineFloatingContact">
             <!-- Nút Gọi Hotline 0942.655.111 -->
-            <a href="tel:0942655111" class="sfc-item sfc-hotline" title="Gọi ngay Hotline 0942.655.111" aria-label="Gọi Hotline 0942.655.111">
+            <a href="tel:0942655111" class="sfc-item sfc-hotline" title="Gọi Hotline: 0942.655.111" aria-label="Gọi Hotline 0942.655.111">
                 <div class="sfc-pulse-ring"></div>
                 <div class="sfc-pulse-ring-2"></div>
                 <div class="sfc-circle">
@@ -4245,22 +4245,14 @@ class Sunshine_Project_Manager {
                         <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.72 11.72 0 003.68.59 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.72 11.72 0 00.59 3.68 1 1 0 01-.24 1.02l-2.23 2.09z"/>
                     </svg>
                 </div>
-                <div class="sfc-text-pill">
-                    <span class="sfc-text-label">Hotline 24/7</span>
-                    <span class="sfc-text-number">0942.655.111</span>
-                </div>
             </a>
 
             <!-- Nút Chat Zalo 0942.655.111 -->
-            <a href="https://zalo.me/0942655111" target="_blank" rel="nofollow noopener" class="sfc-item sfc-zalo" title="Chat Zalo tư vấn: 0942.655.111" aria-label="Chat Zalo 0942.655.111">
+            <a href="https://zalo.me/0942655111" target="_blank" rel="nofollow noopener" class="sfc-item sfc-zalo" title="Chat Zalo: 0942.655.111" aria-label="Chat Zalo 0942.655.111">
                 <div class="sfc-pulse-ring sfc-pulse-zalo"></div>
                 <div class="sfc-pulse-ring-2 sfc-pulse-zalo-2"></div>
                 <div class="sfc-circle sfc-circle-zalo">
                     <span class="sfc-zalo-text">Zalo</span>
-                </div>
-                <div class="sfc-text-pill sfc-zalo-pill">
-                    <span class="sfc-text-label">Tư vấn trực tiếp</span>
-                    <span class="sfc-text-number">Chat Zalo</span>
                 </div>
             </a>
         </div>
