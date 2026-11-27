@@ -4288,8 +4288,8 @@ class Sunshine_Project_Manager {
             transform: scale(1.05) translateY(-2px) !important;
         }
         .sunshine-floating-contact .sfc-circle {
-            width: 48px !important;
-            height: 48px !important;
+            width: 50px !important;
+            height: 50px !important;
             border-radius: 50% !important;
             display: flex !important;
             align-items: center !important;
@@ -4310,7 +4310,7 @@ class Sunshine_Project_Manager {
         .sunshine-floating-contact .sfc-zalo-text {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
             font-weight: 900 !important;
-            font-size: 13.5px !important;
+            font-size: 14.5px !important;
             letter-spacing: -0.3px !important;
             color: #ffffff !important;
             line-height: 1 !important;
@@ -4318,8 +4318,8 @@ class Sunshine_Project_Manager {
         .sunshine-floating-contact .sfc-pulse-ring,
         .sunshine-floating-contact .sfc-pulse-ring-2 {
             position: absolute !important;
-            width: 48px !important;
-            height: 48px !important;
+            width: 50px !important;
+            height: 50px !important;
             border-radius: 50% !important;
             z-index: 1 !important;
             pointer-events: none !important;
@@ -4355,49 +4355,9 @@ class Sunshine_Project_Manager {
             20%, 40% { transform: rotate(16deg); }
             50% { transform: rotate(0deg); }
         }
+        /* Ẩn hoàn toàn text pill, chỉ giữ lại icon nổi tròn */
         .sunshine-floating-contact .sfc-text-pill {
-            margin-left: -20px !important;
-            padding: 7px 18px 7px 28px !important;
-            border-radius: 25px !important;
-            z-index: 2 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            background: #0b2246 !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
-        }
-        .sunshine-floating-contact .sfc-hotline .sfc-text-pill {
-            background: linear-gradient(90deg, #1e293b 0%, #0b2246 100%) !important;
-            border-color: rgba(245, 158, 11, 0.35) !important;
-        }
-        .sunshine-floating-contact .sfc-zalo .sfc-text-pill {
-            background: linear-gradient(90deg, #1e293b 0%, #0b2246 100%) !important;
-            border-color: rgba(0, 104, 255, 0.35) !important;
-        }
-        .sunshine-floating-contact .sfc-text-label {
-            font-size: 10px !important;
-            text-transform: uppercase !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.5px !important;
-            color: #94a3b8 !important;
-            line-height: 1.1 !important;
-            display: block !important;
-        }
-        .sunshine-floating-contact .sfc-hotline .sfc-text-number {
-            font-size: 14.5px !important;
-            font-weight: 800 !important;
-            color: #fbbf24 !important;
-            line-height: 1.2 !important;
-            letter-spacing: 0.3px !important;
-            display: block !important;
-        }
-        .sunshine-floating-contact .sfc-zalo .sfc-text-number {
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            color: #60a5fa !important;
-            line-height: 1.2 !important;
-            display: block !important;
+            display: none !important;
         }
         @media (max-width: 767px) {
             .sunshine-floating-contact {
@@ -4405,17 +4365,14 @@ class Sunshine_Project_Manager {
                 left: 16px !important;
                 gap: 12px !important;
             }
-            .sunshine-floating-contact .sfc-text-pill {
-                display: none !important;
-            }
             .sunshine-floating-contact .sfc-circle {
-                width: 46px !important;
-                height: 46px !important;
+                width: 48px !important;
+                height: 48px !important;
             }
             .sunshine-floating-contact .sfc-pulse-ring,
             .sunshine-floating-contact .sfc-pulse-ring-2 {
-                width: 46px !important;
-                height: 46px !important;
+                width: 48px !important;
+                height: 48px !important;
             }
         }
         </style>
