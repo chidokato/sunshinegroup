@@ -67,8 +67,26 @@ class Sunshine_Project_Manager {
         // Menu quản lý Leads khách hàng đăng ký
         add_action( 'admin_menu', [ __CLASS__, 'register_admin_menus' ] );
 
-        // Cấu hình PHPMailer gửi email qua SMTP chuẩn
+                // Cấu hình PHPMailer gửi email qua SMTP chuẩn
         add_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer_smtp' ] );
+
+        // ĐỒNG BỘ TOÀN DIỆN CÁC FORM CŨ (Contact Form 7) VÀO HỆ THỐNG CRM & GỬI MAIL/TELEGRAM
+        add_action( 'wpcf7_before_send_mail', [ __CLASS__, 'sync_cf7_submission_to_crm' ], 10, 3 );
+        add_action( 'wpcf7_submit', [ __CLASS__, 'sync_cf7_submission_to_crm' ], 10, 2 );
+        add_filter( 'wpcf7_mail_components', [ __CLASS__, 'filter_cf7_mail_recipient' ], 10, 2 );
+
+        // Chống chặn oan khách thật: Khách có số điện thoại Việt Nam hợp lệ sẽ không bị đánh dấu Spam
+        add_filter( 'wpcf7_spam', function( $spam, $submission ) {
+            if ( $submission ) {
+                $posted = $submission->get_posted_data();
+                $phone = $posted['your-phone'] ?? $posted['your-tel'] ?? $posted['phone'] ?? '';
+                $clean = preg_replace( '/[^0-9]/', '', $phone );
+                if ( strlen( $clean ) >= 9 && strlen( $clean ) <= 11 && substr( $clean, 0, 1 ) === '0' ) {
+                    return false;
+                }
+            }
+            return $spam;
+        }, 99, 2 );
 
         // Meta Box thông tin nhanh cho dự án
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
@@ -325,6 +343,15 @@ class Sunshine_Project_Manager {
             update_option( 'admin_email', 'luumui1234@gmail.com' );
             delete_option( 'new_admin_email' );
             delete_option( 'adminhash' );
+        }
+
+        // Đồng bộ người nhận email cho các Form Contact Form 7 cũ (Form 782, 11)
+        foreach ( [ 782, 11 ] as $fid ) {
+            $mail_meta = get_post_meta( $fid, '_mail', true );
+            if ( is_array( $mail_meta ) ) {
+                $mail_meta['recipient'] = 'luumui1234@gmail.com';
+                update_post_meta( $fid, '_mail', $mail_meta );
+            }
         }
 
         $key = 'sunshine_pillar_seo_synced_v2';
@@ -1276,6 +1303,130 @@ class Sunshine_Project_Manager {
     /**
      * Gửi tin nhắn kiểm tra tới Telegram Bot
      */
+    /**
+     * Đồng bộ tự động tất cả các form Contact Form 7 cũ vào Khách hàng (CRM) & Gửi Mail/Telegram
+     */
+    public static function sync_cf7_submission_to_crm( $contact_form, $param2 = null, $submission = null ) {
+        static $handled_submissions = [];
+        if ( ! $submission ) {
+            if ( class_exists( 'WPCF7_Submission' ) ) {
+                $submission = WPCF7_Submission::get_instance();
+            }
+        }
+        if ( ! $submission ) {
+            return;
+        }
+
+        // Tránh lưu 2 lần nếu cả 2 hook đều chạy
+        $sub_hash = spl_object_hash( $submission );
+        if ( isset( $handled_submissions[$sub_hash] ) ) {
+            return;
+        }
+        $handled_submissions[$sub_hash] = true;
+        if ( ! $submission ) {
+            if ( class_exists( 'WPCF7_Submission' ) ) {
+                $submission = WPCF7_Submission::get_instance();
+            }
+        }
+        if ( ! $submission ) {
+            return;
+        }
+
+        $posted_data = $submission->get_posted_data();
+        if ( empty( $posted_data ) || ! is_array( $posted_data ) ) {
+            return;
+        }
+
+        // 1. Trích xuất Họ và tên
+        $name = '';
+        foreach ( [ 'your-name', 'name', 'ho-ten', 'full-name', 'fullname', 'your_name' ] as $k ) {
+            if ( ! empty( $posted_data[$k] ) ) {
+                $name = sanitize_text_field( $posted_data[$k] );
+                break;
+            }
+        }
+        if ( empty( $name ) ) {
+            $name = 'Khách Hàng (Form Cũ)';
+        }
+
+        // 2. Trích xuất Số điện thoại
+        $phone = '';
+        foreach ( [ 'your-phone', 'your-tel', 'phone', 'tel', 'so-dien-thoai', 'your_phone', 'mobile' ] as $k ) {
+            if ( ! empty( $posted_data[$k] ) ) {
+                $phone = sanitize_text_field( $posted_data[$k] );
+                break;
+            }
+        }
+
+        // 3. Trích xuất Email
+        $email = '';
+        foreach ( [ 'your-email', 'email', 'your_email' ] as $k ) {
+            if ( ! empty( $posted_data[$k] ) ) {
+                $email = sanitize_email( $posted_data[$k] );
+                break;
+            }
+        }
+
+        // 4. Trích xuất Nhu cầu / Dự án / Lời nhắn
+        $message = '';
+        foreach ( [ 'your-message', 'message', 'your-subject', 'subject', 'du-an', 'noi-dung' ] as $k ) {
+            if ( ! empty( $posted_data[$k] ) ) {
+                $message = sanitize_text_field( $posted_data[$k] );
+                break;
+            }
+        }
+
+        // 5. Xác định Dự án và Trang nguồn
+        $source_url = '';
+        if ( method_exists( $submission, 'get_meta' ) ) {
+            $source_url = $submission->get_meta( 'url' );
+        }
+        if ( empty( $source_url ) ) {
+            $source_url = is_singular() ? get_permalink() : home_url( $_SERVER['REQUEST_URI'] ?? '/' );
+        }
+
+        $project_name = '';
+        if ( ! empty( $message ) && ( strpos( mb_strtolower( $message ), 'sunshine' ) !== false || strpos( mb_strtolower( $message ), 'handico' ) !== false || strpos( mb_strtolower( $message ), 'noble' ) !== false || strpos( mb_strtolower( $message ), 'hinode' ) !== false ) ) {
+            $project_name = $message;
+        } else {
+            $container_id = method_exists( $submission, 'get_meta' ) ? (int) $submission->get_meta( 'container_post_id' ) : 0;
+            $current_post_id = get_queried_object_id() ?: $container_id;
+            if ( $current_post_id ) {
+                $project_name = get_the_title( $current_post_id );
+            } else {
+                $project_name = ! empty( $message ) ? $message : 'Đăng ký Form ' . $contact_form->title();
+            }
+        }
+
+        // 6. Lưu vào Khách hàng (CRM) và kích hoạt gửi Email HTML + Telegram tự động!
+        self::save_lead_submission( [
+            'id'         => 'cf7_' . substr( md5( uniqid( mt_rand(), true ) ), 0, 8 ),
+            'form'       => 'Contact Form 7 (ID ' . $contact_form->id() . ' - ' . $contact_form->title() . ')',
+            'name'       => $name,
+            'phone'      => $phone,
+            'email'      => $email,
+            'project'    => $project_name,
+            'type'       => 'cao_tang',
+            'demand'     => ! empty( $message ) ? $message : 'Nhận bảng giá & tư vấn liên hệ',
+            'status'     => 'new',
+            'note'       => 'Đăng ký từ ' . $contact_form->title() . ( ! empty( $message ) ? ' | Nội dung: ' . $message : '' ),
+            'source_url' => $source_url,
+            'time'       => current_time( 'mysql' ),
+            'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+        ] );
+    }
+
+    /**
+     * Đồng bộ người nhận email của Contact Form 7 sang email quản trị mới
+     */
+    public static function filter_cf7_mail_recipient( $components, $form ) {
+        $configured_emails = get_option( 'sunshine_lead_notification_emails', 'luumui1234@gmail.com' );
+        if ( ! empty( $configured_emails ) ) {
+            $components['recipient'] = $configured_emails;
+        }
+        return $components;
+    }
+
     public static function send_test_telegram() {
         $token   = trim(get_option('sunshine_telegram_bot_token', ''));
         $chat_id = trim(get_option('sunshine_telegram_chat_id', ''));
@@ -2736,7 +2887,96 @@ class Sunshine_Project_Manager {
             padding: 10px 18px !important;
         }
 
-        /* 7. LƯỚI CARD DỰ ÁN 4 CỘT CHUẨN KENHBATDONGSAN */
+        /* 8. ĐỒNG BỘ GIAO DIỆN FORM CŨ (CONTACT FORM 7) THEO PHONG CÁCH BĐS CAO CẤP */
+        .wpcf7 {
+            margin: 15px 0 !important;
+        }
+        .wpcf7-form {
+            background: rgba(15, 23, 42, 0.94) !important;
+            padding: 24px 22px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(212, 175, 55, 0.35) !important;
+            color: #ffffff !important;
+        }
+        .wpcf7-form p {
+            margin-bottom: 12px !important;
+        }
+        .wpcf7-form input[type="text"],
+        .wpcf7-form input[type="tel"],
+        .wpcf7-form input[type="email"],
+        .wpcf7-form textarea {
+            width: 100% !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 8px !important;
+            padding: 10px 14px !important;
+            font-size: 14px !important;
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            transition: all 0.25s ease !important;
+            box-sizing: border-box !important;
+        }
+        .wpcf7-form input[type="text"]::placeholder,
+        .wpcf7-form input[type="tel"]::placeholder,
+        .wpcf7-form input[type="email"]::placeholder,
+        .wpcf7-form textarea::placeholder {
+            color: #cbd5e1 !important;
+        }
+        .wpcf7-form input[type="text"]:focus,
+        .wpcf7-form input[type="tel"]:focus,
+        .wpcf7-form input[type="email"]:focus,
+        .wpcf7-form textarea:focus {
+            border-color: #d4af37 !important;
+            background: rgba(255, 255, 255, 0.14) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3) !important;
+        }
+        .wpcf7-form input[type="submit"],
+        .wpcf7-submit {
+            width: 100% !important;
+            height: 46px !important;
+            line-height: 46px !important;
+            padding: 0 20px !important;
+            background: linear-gradient(135deg, #d4af37 0%, #b45309 100%) !important;
+            color: #0b2246 !important;
+            font-weight: 800 !important;
+            font-size: 14.5px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            border: none !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4) !important;
+            transition: all 0.25s ease !important;
+            margin-top: 6px !important;
+        }
+        .wpcf7-form input[type="submit"]:hover,
+        .wpcf7-submit:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6) !important;
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%) !important;
+        }
+        .wpcf7-response-output {
+            border-radius: 8px !important;
+            padding: 12px 16px !important;
+            font-size: 13.5px !important;
+            font-weight: 600 !important;
+            margin-top: 14px !important;
+            border: none !important;
+        }
+        .wpcf7 form.sent .wpcf7-response-output {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border: 1px solid #10b981 !important;
+            color: #34d399 !important;
+        }
+        .wpcf7 form.failed .wpcf7-response-output,
+        .wpcf7 form.invalid .wpcf7-response-output {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border: 1px solid #ef4444 !important;
+            color: #f87171 !important;
+        }
+
+                /* 7. LƯỚI CARD DỰ ÁN 4 CỘT CHUẨN KENHBATDONGSAN */
         .kbds-home-projects-grid,
         .kbds-grid-4 {
             display: grid !important;
@@ -3603,6 +3843,38 @@ class Sunshine_Project_Manager {
      * Endpoint hỗ trợ đồng bộ các tệp tin media chính xác theo đường dẫn gốc
      */
     public static function register_asset_sync_route() {
+                register_rest_route( 'sunshine/v1', '/scan-forms', [
+            'methods'             => 'GET',
+            'callback'            => function() {
+                global $wpdb;
+                $cf7_forms = $wpdb->get_results("SELECT ID, post_title, post_name FROM {$wpdb->posts} WHERE post_type = 'wpcf7_contact_form'");
+                $posts_with_forms = $wpdb->get_results("SELECT ID, post_type, post_title, post_name FROM {$wpdb->posts} WHERE (post_content LIKE '%[contact-form-7%' OR post_content LIKE '%[kbds_lead%' OR post_content LIKE '%<form%') AND post_status = 'publish'");
+                $blocks = $wpdb->get_results("SELECT ID, post_title, post_name, post_content FROM {$wpdb->posts} WHERE post_type = 'blocks'");
+                
+                $block_forms = [];
+                foreach ($blocks as $b) {
+                    if (strpos($b->post_content, 'form') !== false || strpos($b->post_content, 'contact') !== false || strpos($b->post_content, 'dang-ky') !== false || strpos($b->post_content, 'kbds') !== false) {
+                        $block_forms[] = [
+                            'ID' => $b->ID,
+                            'title' => $b->post_title,
+                            'slug' => $b->post_name,
+                            'content' => substr($b->post_content, 0, 300)
+                        ];
+                    }
+                }
+
+                return [
+                    'cf7_forms' => $cf7_forms,
+                    'posts_with_forms' => $posts_with_forms,
+                    'block_forms' => $block_forms,
+                    'theme_mods' => get_theme_mods()
+                ];
+            },
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            },
+        ] );
+
         register_rest_route( 'sunshine/v1', '/upload-asset', [
             'methods'             => 'POST',
             'callback'            => [ __CLASS__, 'handle_asset_upload' ],
