@@ -37,6 +37,7 @@ class Sunshine_Project_Manager {
         add_filter( 'theme_mod_footer_2', '__return_false', 99 );
         add_action( 'flatsome_before_footer', [ __CLASS__, 'render_sunshine_luxury_footer' ] );
         add_action( 'wp_footer', [ __CLASS__, 'output_sunshine_subnav_scripts' ], 99 );
+        add_action( 'wp_footer', [ __CLASS__, 'render_sunshine_floating_contact' ], 100 );
 
         // Shortcode tự động hiển thị dự án ra Trang Chủ
         add_shortcode( 'sunshine_du_an', [ __CLASS__, 'render_projects_shortcode' ] );
@@ -376,6 +377,39 @@ class Sunshine_Project_Manager {
                 update_post_meta( $fid, '_mail', $mail_meta );
             }
         }
+
+        // Cập nhật Hotline mới 0942655111 và Zalo vào Widget Custom HTML Sidebar
+        $widget_custom_html = get_option( 'widget_custom_html' );
+        if ( is_array( $widget_custom_html ) ) {
+            $widget_updated = false;
+            foreach ( $widget_custom_html as $k => $item ) {
+                if ( is_array( $item ) && isset( $item['content'] ) ) {
+                    if ( strpos( $item['content'], '0965' ) !== false || strpos( $item['content'], '355.355' ) !== false || ( strpos( $item['content'], 'sunshine-sidebar-hotline-card' ) !== false && strpos( $item['content'], 'zalo.me' ) === false ) ) {
+                        $content = str_replace(
+                            [ '0965355355', '0965.355.355' ],
+                            [ '0942655111', '0942.655.111' ],
+                            $item['content']
+                        );
+                        if ( strpos( $content, 'zalo.me' ) === false ) {
+                            $zalo_btn = '<a href="https://zalo.me/0942655111" target="_blank" rel="nofollow noopener" class="sb-zalo-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#0068ff;color:#ffffff !important;font-weight:700;font-size:13.5px;padding:11px 16px;border-radius:5px;text-decoration:none !important;box-shadow:0 4px 12px rgba(0,104,255,0.35);margin-top:10px;transition:all 0.3s ease"><span style="font-weight:900;letter-spacing:0.5px">Zalo</span><span class="sb-btn-text">CHAT ZALO: 0942.655.111</span></a>';
+                            $content = str_replace( '</a>', '</a>' . "\n    " . $zalo_btn, $content );
+                        }
+                        if ( $content !== $item['content'] ) {
+                            $widget_custom_html[$k]['content'] = $content;
+                            $widget_updated = true;
+                        }
+                    }
+                }
+            }
+            if ( $widget_updated ) {
+                update_option( 'widget_custom_html', $widget_custom_html );
+            }
+        }
+
+        // Quét và cập nhật số hotline cũ trong bài viết nếu có
+        global $wpdb;
+        $wpdb->query( "UPDATE {$wpdb->posts} SET post_content = REPLACE(post_content, '0965355355', '0942655111') WHERE post_content LIKE '%0965355355%'" );
+        $wpdb->query( "UPDATE {$wpdb->posts} SET post_content = REPLACE(post_content, '0965.355.355', '0942.655.111') WHERE post_content LIKE '%0965.355.355%'" );
 
         $key = 'sunshine_pillar_seo_synced_v2';
         if ( get_option( $key ) ) {
@@ -4189,6 +4223,202 @@ class Sunshine_Project_Manager {
             }
         })();
         </script>
+        <?php
+    }
+
+    /**
+     * Render cụm Hotline & Zalo nổi bám sát màn hình khi lăn chuột lên xuống (Floating Contact Widget)
+     */
+    public static function render_sunshine_floating_contact() {
+        if ( is_admin() ) {
+            return;
+        }
+        ?>
+        <!-- SUNSHINE FLOATING HOTLINE & ZALO (LĂN THEO CHUỘT) -->
+        <div class="sunshine-floating-contact" id="sunshineFloatingContact">
+            <!-- Nút Gọi Hotline 0942.655.111 -->
+            <a href="tel:0942655111" class="sfc-item sfc-hotline" title="Gọi ngay Hotline 0942.655.111" aria-label="Gọi Hotline 0942.655.111">
+                <div class="sfc-pulse-ring"></div>
+                <div class="sfc-pulse-ring-2"></div>
+                <div class="sfc-circle">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" class="sfc-phone-svg" aria-hidden="true">
+                        <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.72 11.72 0 003.68.59 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.72 11.72 0 00.59 3.68 1 1 0 01-.24 1.02l-2.23 2.09z"/>
+                    </svg>
+                </div>
+                <div class="sfc-text-pill">
+                    <span class="sfc-text-label">Hotline 24/7</span>
+                    <span class="sfc-text-number">0942.655.111</span>
+                </div>
+            </a>
+
+            <!-- Nút Chat Zalo 0942.655.111 -->
+            <a href="https://zalo.me/0942655111" target="_blank" rel="nofollow noopener" class="sfc-item sfc-zalo" title="Chat Zalo tư vấn: 0942.655.111" aria-label="Chat Zalo 0942.655.111">
+                <div class="sfc-pulse-ring sfc-pulse-zalo"></div>
+                <div class="sfc-pulse-ring-2 sfc-pulse-zalo-2"></div>
+                <div class="sfc-circle sfc-circle-zalo">
+                    <span class="sfc-zalo-text">Zalo</span>
+                </div>
+                <div class="sfc-text-pill sfc-zalo-pill">
+                    <span class="sfc-text-label">Tư vấn trực tiếp</span>
+                    <span class="sfc-text-number">Chat Zalo</span>
+                </div>
+            </a>
+        </div>
+        <style id="sunshine-floating-contact-css">
+        .sunshine-floating-contact {
+            position: fixed !important;
+            bottom: 30px !important;
+            left: 24px !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 14px !important;
+            pointer-events: auto !important;
+        }
+        .sunshine-floating-contact .sfc-item {
+            display: flex !important;
+            align-items: center !important;
+            text-decoration: none !important;
+            position: relative !important;
+            cursor: pointer !important;
+            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28)) !important;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+        }
+        .sunshine-floating-contact .sfc-item:hover {
+            transform: scale(1.05) translateY(-2px) !important;
+        }
+        .sunshine-floating-contact .sfc-circle {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: relative !important;
+            z-index: 3 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35) !important;
+            box-sizing: border-box !important;
+        }
+        .sunshine-floating-contact .sfc-hotline .sfc-circle {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 40%, #dc2626 100%) !important;
+            border: 2px solid #fef3c7 !important;
+        }
+        .sunshine-floating-contact .sfc-zalo .sfc-circle {
+            background: linear-gradient(135deg, #0084ff 0%, #0068ff 100%) !important;
+            border: 2px solid #dbeafe !important;
+        }
+        .sunshine-floating-contact .sfc-zalo-text {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            font-weight: 900 !important;
+            font-size: 13.5px !important;
+            letter-spacing: -0.3px !important;
+            color: #ffffff !important;
+            line-height: 1 !important;
+        }
+        .sunshine-floating-contact .sfc-pulse-ring,
+        .sunshine-floating-contact .sfc-pulse-ring-2 {
+            position: absolute !important;
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 50% !important;
+            z-index: 1 !important;
+            pointer-events: none !important;
+            top: 0 !important;
+            left: 0 !important;
+        }
+        .sunshine-floating-contact .sfc-hotline .sfc-pulse-ring {
+            background: rgba(220, 38, 38, 0.5) !important;
+            animation: sfc-wave 2s infinite ease-out !important;
+        }
+        .sunshine-floating-contact .sfc-hotline .sfc-pulse-ring-2 {
+            background: rgba(245, 158, 11, 0.4) !important;
+            animation: sfc-wave 2s infinite ease-out 0.7s !important;
+        }
+        .sunshine-floating-contact .sfc-zalo .sfc-pulse-ring {
+            background: rgba(0, 104, 255, 0.5) !important;
+            animation: sfc-wave 2s infinite ease-out !important;
+        }
+        .sunshine-floating-contact .sfc-zalo .sfc-pulse-ring-2 {
+            background: rgba(0, 132, 255, 0.4) !important;
+            animation: sfc-wave 2s infinite ease-out 0.7s !important;
+        }
+        @keyframes sfc-wave {
+            0% { transform: scale(0.9); opacity: 0.85; }
+            100% { transform: scale(1.7); opacity: 0; }
+        }
+        .sunshine-floating-contact .sfc-phone-svg {
+            animation: sfc-wiggle 1.8s infinite ease-in-out !important;
+        }
+        @keyframes sfc-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(-16deg); }
+            20%, 40% { transform: rotate(16deg); }
+            50% { transform: rotate(0deg); }
+        }
+        .sunshine-floating-contact .sfc-text-pill {
+            margin-left: -20px !important;
+            padding: 7px 18px 7px 28px !important;
+            border-radius: 25px !important;
+            z-index: 2 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            background: #0b2246 !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+        }
+        .sunshine-floating-contact .sfc-hotline .sfc-text-pill {
+            background: linear-gradient(90deg, #1e293b 0%, #0b2246 100%) !important;
+            border-color: rgba(245, 158, 11, 0.35) !important;
+        }
+        .sunshine-floating-contact .sfc-zalo .sfc-text-pill {
+            background: linear-gradient(90deg, #1e293b 0%, #0b2246 100%) !important;
+            border-color: rgba(0, 104, 255, 0.35) !important;
+        }
+        .sunshine-floating-contact .sfc-text-label {
+            font-size: 10px !important;
+            text-transform: uppercase !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            color: #94a3b8 !important;
+            line-height: 1.1 !important;
+            display: block !important;
+        }
+        .sunshine-floating-contact .sfc-hotline .sfc-text-number {
+            font-size: 14.5px !important;
+            font-weight: 800 !important;
+            color: #fbbf24 !important;
+            line-height: 1.2 !important;
+            letter-spacing: 0.3px !important;
+            display: block !important;
+        }
+        .sunshine-floating-contact .sfc-zalo .sfc-text-number {
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            color: #60a5fa !important;
+            line-height: 1.2 !important;
+            display: block !important;
+        }
+        @media (max-width: 767px) {
+            .sunshine-floating-contact {
+                bottom: 20px !important;
+                left: 16px !important;
+                gap: 12px !important;
+            }
+            .sunshine-floating-contact .sfc-text-pill {
+                display: none !important;
+            }
+            .sunshine-floating-contact .sfc-circle {
+                width: 46px !important;
+                height: 46px !important;
+            }
+            .sunshine-floating-contact .sfc-pulse-ring,
+            .sunshine-floating-contact .sfc-pulse-ring-2 {
+                width: 46px !important;
+                height: 46px !important;
+            }
+        }
+        </style>
         <?php
     }
 }

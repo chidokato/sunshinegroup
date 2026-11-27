@@ -192,6 +192,41 @@ aside#secondary .search-form button:hover {
     margin-top: 10px;
 }
 
+.sunshine-sidebar-hotline-card .sb-zalo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0068ff;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 13.5px;
+    padding: 11px 16px;
+    border-radius: 5px;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(0, 104, 255, 0.35);
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.sunshine-sidebar-hotline-card .sb-zalo-btn:hover {
+    background: #0056d6 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 104, 255, 0.45);
+}
+
+/* Sticky Hotline & Zalo Sidebar Widget khi cuộn chuột lăn theo màn hình */
+@media (min-width: 850px) {
+    aside#custom_html-2,
+    .sidebar-main .sunshine-sidebar-hotline-card,
+    aside#secondary .sunshine-sidebar-hotline-card {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 115px !important;
+        z-index: 90 !important;
+    }
+}
+
 /* 3. Widget Bài Viết Mới Flatsome */
 .sidebar-main .widget_flatsome_recent_posts ul,
 aside#secondary .widget_flatsome_recent_posts ul {
