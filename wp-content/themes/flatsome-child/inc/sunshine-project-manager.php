@@ -970,6 +970,15 @@ class Sunshine_Project_Manager {
         if ( ! is_array( $leads ) ) {
             $leads = [];
         }
+        if ( empty( $data['id'] ) ) {
+            $data['id'] = 'lead_' . substr( md5( uniqid( mt_rand(), true ) ), 0, 8 );
+        }
+        if ( empty( $data['status'] ) ) {
+            $data['status'] = 'new';
+        }
+        if ( ! isset( $data['note'] ) ) {
+            $data['note'] = '';
+        }
         array_unshift( $leads, $data );
         if ( count( $leads ) > 300 ) {
             $leads = array_slice( $leads, 0, 300 );
@@ -1185,28 +1194,126 @@ class Sunshine_Project_Manager {
         ];
     }
 
+    /**
+     * =========================================================================
+     * CHỨC NĂNG CRM QUẢN LÝ KHÁCH HÀNG & CÀI ĐẶT THÔNG BÁO (TELEGRAM & EMAIL)
+     * =========================================================================
+     */
+
+    /**
+     * Đăng ký Menu Admin: Khách hàng (CRM)
+     */
     public static function register_admin_menus() {
         $leads = get_option('sunshine_customer_leads', []);
-        $unread_count = is_array($leads) ? count($leads) : 0;
-        $menu_title = 'Khách Đăng Ký';
-        if ($unread_count > 0) {
-            $menu_title .= ' <span class="awaiting-mod count-' . $unread_count . '"><span class="pending-count" style="background:#d4af37;color:#0b2246;font-weight:bold;padding:1px 6px;border-radius:10px;">' . $unread_count . '</span></span>';
+        if (!is_array($leads)) { $leads = []; }
+
+        // Đếm số lượng khách mới (chưa gọi / new)
+        $new_count = 0;
+        foreach ($leads as $l) {
+            $st = $l['status'] ?? 'new';
+            if ($st === 'new') {
+                $new_count++;
+            }
         }
 
+        $badge = '';
+        if ($new_count > 0) {
+            $badge = ' <span class="update-plugins count-' . $new_count . '" style="background:#ef4444;color:#ffffff;border-radius:10px;padding:2px 7px;font-size:11px;font-weight:800;margin-left:4px;display:inline-block;line-height:1.2;">' . $new_count . '</span>';
+        }
+
+        // 1. Menu Top-Level: Khách hàng (CRM)
+        add_menu_page(
+            'Quản Lý Khách Hàng (CRM)',
+            'Khách hàng (CRM)' . $badge,
+            'manage_options',
+            'sunshine-crm',
+            [ __CLASS__, 'render_crm_customers_page' ],
+            'dashicons-groups',
+            6
+        );
+
+        // Submenu 1: Khách hàng (CRM) (Tất cả khách hàng)
+        add_submenu_page(
+            'sunshine-crm',
+            'Danh Sách Khách Hàng (CRM)',
+            'Khách hàng (CRM)',
+            'manage_options',
+            'sunshine-crm',
+            [ __CLASS__, 'render_crm_customers_page' ]
+        );
+
+        // Submenu 2: Thêm thông tin Khách hàng
+        add_submenu_page(
+            'sunshine-crm',
+            'Thêm Thông Tin Khách Hàng',
+            'Thêm thông tin Khách hàng',
+            'manage_options',
+            'sunshine-crm-add',
+            [ __CLASS__, 'render_crm_add_page' ]
+        );
+
+        // Submenu 3: Cài đặt Telegram (và Email SMTP)
+        add_submenu_page(
+            'sunshine-crm',
+            'Cài Đặt Telegram & Thông Báo Mail',
+            'Cài đặt Telegram',
+            'manage_options',
+            'sunshine-crm-settings',
+            [ __CLASS__, 'render_crm_settings_page' ]
+        );
+
+        // Giữ tương thích đường dẫn cũ trong Dự Án BĐS
         add_submenu_page(
             'edit.php?post_type=du_an',
-            'Danh Sách Khách Hàng Đăng Ký (Leads)',
-            $menu_title,
+            'Danh Sách Khách Hàng (CRM)',
+            'Khách Đăng Ký' . $badge,
             'manage_options',
             'sunshine-customer-leads',
-            [ __CLASS__, 'render_leads_admin_page' ]
+            [ __CLASS__, 'render_crm_customers_page' ]
         );
     }
 
     /**
-     * Giao diện Quản Lý Khách Đăng Ký & Cài Đặt Gửi Mail / SMTP
+     * Gửi tin nhắn kiểm tra tới Telegram Bot
      */
-    public static function render_leads_admin_page() {
+    public static function send_test_telegram() {
+        $token   = trim(get_option('sunshine_telegram_bot_token', ''));
+        $chat_id = trim(get_option('sunshine_telegram_chat_id', ''));
+        if (empty($token) || empty($chat_id)) {
+            return ['success' => false, 'error' => 'Vui lòng nhập Bot Token và Chat ID trước khi gửi thử.'];
+        }
+
+        $text = "🎉 *KIỂM TRA KẾT NỐI TELEGRAM THÀNH CÔNG!*\n"
+              . "━━━━━━━━━━━━━━━━━━━\n"
+              . "Website *" . get_bloginfo('name') . "* đã kết nối thành công với Telegram của bạn.\n"
+              . "Từ bây giờ, mỗi khi có khách hàng đăng ký trên website, thông báo sẽ bắn trực tiếp về Telegram ngay tức thì!\n"
+              . "⏰ Thời gian: " . current_time('mysql');
+
+        $response = @wp_remote_post("https://api.telegram.org/bot{$token}/sendMessage", [
+            'body'    => [
+                'chat_id'    => $chat_id,
+                'text'       => $text,
+                'parse_mode' => 'Markdown',
+            ],
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            return ['success' => false, 'error' => $response->get_error_message()];
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (!empty($data['ok'])) {
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'error' => $data['description'] ?? 'Lỗi không xác định từ máy chủ Telegram.'];
+    }
+
+    /**
+     * TRANG 1: DANH SÁCH KHÁCH HÀNG (CRM)
+     */
+    public static function render_crm_customers_page() {
         if (!current_user_can('manage_options')) {
             wp_die('Bạn không có quyền truy cập trang này.');
         }
@@ -1214,20 +1321,573 @@ class Sunshine_Project_Manager {
         $notice = '';
         $notice_type = 'success';
 
-        // Xử lý Lưu Cài Đặt Email & SMTP
-        if (isset($_POST['sunshine_save_settings']) && check_admin_referer('sunshine_leads_settings_nonce')) {
-            $notification_emails = sanitize_text_field(wp_unslash($_POST['sunshine_lead_notification_emails'] ?? ''));
-            $smtp_enabled        = isset($_POST['sunshine_smtp_enabled']) ? 1 : 0;
-            $smtp_host           = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_host'] ?? 'smtp.gmail.com'));
-            $smtp_port           = (int) ($_POST['sunshine_smtp_port'] ?? 465);
-            $smtp_enc            = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_enc'] ?? 'ssl'));
-            $smtp_user           = sanitize_email(wp_unslash($_POST['sunshine_smtp_user'] ?? ''));
-            $smtp_pass           = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_pass'] ?? ''));
-            $smtp_from_name      = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_from_name'] ?? 'Sunshine Group BĐS'));
-            $tele_token          = sanitize_text_field(wp_unslash($_POST['sunshine_telegram_bot_token'] ?? ''));
-            $tele_chat           = sanitize_text_field(wp_unslash($_POST['sunshine_telegram_chat_id'] ?? ''));
+        $leads = get_option('sunshine_customer_leads', []);
+        if (!is_array($leads)) { $leads = []; }
 
-            update_option('sunshine_lead_notification_emails', $notification_emails);
+        // Đảm bảo mỗi lead có ID và status chuẩn
+        $needs_save = false;
+        foreach ($leads as $k => $l) {
+            if (empty($l['id'])) {
+                $leads[$k]['id'] = 'lead_' . substr(md5(uniqid(mt_rand(), true)), 0, 8);
+                $needs_save = true;
+            }
+            if (empty($l['status'])) {
+                $leads[$k]['status'] = 'new';
+                $needs_save = true;
+            }
+        }
+        if ($needs_save) {
+            update_option('sunshine_customer_leads', $leads);
+        }
+
+        // Xử lý Cập nhật trạng thái / ghi chú nhanh
+        if (isset($_POST['crm_update_lead']) && check_admin_referer('crm_update_lead_nonce')) {
+            $lead_id = sanitize_text_field(wp_unslash($_POST['lead_id'] ?? ''));
+            $new_st  = sanitize_text_field(wp_unslash($_POST['new_status'] ?? 'new'));
+            $new_nt  = sanitize_textarea_field(wp_unslash($_POST['new_note'] ?? ''));
+
+            foreach ($leads as $k => $l) {
+                if (($l['id'] ?? '') === $lead_id) {
+                    $leads[$k]['status'] = $new_st;
+                    $leads[$k]['note']   = $new_nt;
+                    break;
+                }
+            }
+            update_option('sunshine_customer_leads', $leads);
+            $notice = '✓ Đã cập nhật trạng thái chăm sóc khách hàng!';
+        }
+
+        // Xử lý Xóa 1 lead
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+            check_admin_referer('sunshine_crm_delete_lead');
+            $del_id = sanitize_text_field($_GET['id']);
+            foreach ($leads as $k => $l) {
+                if (($l['id'] ?? '') === $del_id) {
+                    array_splice($leads, $k, 1);
+                    break;
+                }
+            }
+            update_option('sunshine_customer_leads', $leads);
+            wp_safe_redirect(admin_url('admin.php?page=sunshine-crm&deleted=1'));
+            exit;
+        }
+
+        // Xử lý Xóa tất cả
+        if (isset($_GET['action']) && $_GET['action'] === 'clear_all') {
+            check_admin_referer('sunshine_crm_clear_leads');
+            update_option('sunshine_customer_leads', []);
+            wp_safe_redirect(admin_url('admin.php?page=sunshine-crm&cleared=1'));
+            exit;
+        }
+
+        // Xử lý xuất Excel CSV
+        if (isset($_GET['action']) && $_GET['action'] === 'export_csv') {
+            check_admin_referer('sunshine_crm_export');
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=crm-khach-hang-' . date('Y-m-d') . '.csv');
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            fputcsv($out, ['STT', 'Thời gian', 'Họ và tên', 'Số điện thoại', 'Trạng thái', 'Nhu cầu', 'Dự án', 'Phân khúc', 'Email', 'Ghi chú CSKH', 'Nguồn']);
+            $st_labels = [
+                'new'         => 'Mới tiếp nhận',
+                'contacting'  => 'Đang liên hệ / Tư vấn',
+                'appointment' => 'Hẹn xem dự án',
+                'closed'      => 'Đã cọc / Giao dịch',
+                'unqualified' => 'Không nhu cầu / Sai số',
+            ];
+            $i = 1;
+            foreach ($leads as $l) {
+                fputcsv($out, [
+                    $i++,
+                    $l['time'] ?? '',
+                    $l['name'] ?? '',
+                    $l['phone'] ?? '',
+                    $st_labels[$l['status'] ?? 'new'] ?? 'Mới tiếp nhận',
+                    $l['demand'] ?? '',
+                    $l['project'] ?? '',
+                    (($l['type'] ?? '') === 'thap_tang') ? 'Thấp tầng' : 'Cao tầng',
+                    $l['email'] ?? '',
+                    $l['note'] ?? '',
+                    $l['source_url'] ?? 'Website'
+                ]);
+            }
+            fclose($out);
+            exit;
+        }
+
+        // Thống kê theo trạng thái
+        $total = count($leads);
+        $count_new = 0;
+        $count_contacting = 0;
+        $count_appointment = 0;
+        $count_closed = 0;
+        foreach ($leads as $l) {
+            $st = $l['status'] ?? 'new';
+            if ($st === 'new') $count_new++;
+            elseif ($st === 'contacting') $count_contacting++;
+            elseif ($st === 'appointment') $count_appointment++;
+            elseif ($st === 'closed') $count_closed++;
+        }
+
+        // Bộ lọc hiển thị
+        $filter_status  = sanitize_text_field($_GET['filter_status'] ?? '');
+        $filter_project = sanitize_text_field($_GET['filter_project'] ?? '');
+        $search_kw      = sanitize_text_field($_GET['s'] ?? '');
+
+        $display_leads = $leads;
+        if (!empty($filter_status)) {
+            $display_leads = array_filter($display_leads, function($l) use ($filter_status) {
+                return ($l['status'] ?? 'new') === $filter_status;
+            });
+        }
+        if (!empty($filter_project)) {
+            $display_leads = array_filter($display_leads, function($l) use ($filter_project) {
+                return strpos(mb_strtolower($l['project'] ?? ''), mb_strtolower($filter_project)) !== false;
+            });
+        }
+        if (!empty($search_kw)) {
+            $display_leads = array_filter($display_leads, function($l) use ($search_kw) {
+                $kw = mb_strtolower($search_kw);
+                return (strpos(mb_strtolower($l['name'] ?? ''), $kw) !== false) ||
+                       (strpos(mb_strtolower($l['phone'] ?? ''), $kw) !== false) ||
+                       (strpos(mb_strtolower($l['email'] ?? ''), $kw) !== false);
+            });
+        }
+
+        // Lấy danh sách dự án duy nhất cho bộ lọc
+        $unique_projects = array_unique(array_filter(array_column($leads, 'project')));
+        ?>
+        <div class="wrap" style="max-width:1380px;margin-top:18px;">
+            <!-- Header CRM -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="dashicons dashicons-groups" style="font-size:36px;width:36px;height:36px;color:#2563eb;"></span>
+                    <div>
+                        <h1 style="font-size:24px;font-weight:800;color:#0b2246;margin:0;line-height:1.2;">
+                            Khách Hàng (CRM Bất Động Sản)
+                        </h1>
+                        <span style="font-size:13px;color:#64748b;">Hệ thống quản lý, phân loại và chăm sóc khách hàng mua BĐS</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <a href="<?php echo admin_url('admin.php?page=sunshine-crm-add'); ?>" class="button button-primary" style="background:#2563eb;border-color:#2563eb;font-weight:700;padding:5px 16px;font-size:13.5px;display:inline-flex;align-items:center;gap:6px;">
+                        <span class="dashicons dashicons-plus-alt2" style="font-size:16px;line-height:28px;"></span> Thêm Khách Hàng
+                    </a>
+                    <?php if ($total > 0) : ?>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=sunshine-crm&action=export_csv'), 'sunshine_crm_export'); ?>" class="button" style="font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                            📥 Xuất Excel
+                        </a>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=sunshine-crm&action=clear_all'), 'sunshine_crm_clear_leads'); ?>" class="button" onclick="return confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách khách hàng này?');" style="color:#dc2626;">
+                            Xóa tất cả
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (!empty($notice)) : ?>
+                <div class="notice notice-<?php echo esc_attr($notice_type); ?> is-dismissible" style="padding:10px 14px;"><p style="margin:0;font-weight:600;"><?php echo esc_html($notice); ?></p></div>
+            <?php endif; ?>
+            <?php if (isset($_GET['deleted'])) : ?>
+                <div class="notice notice-success is-dismissible"><p>✓ Đã xóa khách hàng khỏi danh sách.</p></div>
+            <?php endif; ?>
+            <?php if (isset($_GET['cleared'])) : ?>
+                <div class="notice notice-success is-dismissible"><p>✓ Đã làm trống toàn bộ dữ liệu CRM.</p></div>
+            <?php endif; ?>
+            <?php if (isset($_GET['added'])) : ?>
+                <div class="notice notice-success is-dismissible"><p>🎉 Đã thêm mới khách hàng thành công vào hệ thống CRM!</p></div>
+            <?php endif; ?>
+
+            <!-- THẺ THỐNG KÊ CRM (CARDS) -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:16px;margin-bottom:22px;">
+                <!-- Tổng khách -->
+                <div style="background:#fff;border-left:5px solid #2563eb;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;">Tổng Khách Hàng</span>
+                    <strong style="display:block;font-size:26px;color:#0b2246;margin-top:4px;"><?php echo $total; ?></strong>
+                </div>
+                <!-- Khách mới (Chưa gọi) -->
+                <div style="background:#fff;border-left:5px solid #ef4444;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:12px;color:#ef4444;font-weight:700;text-transform:uppercase;">Mới (Chưa Liên Hệ)</span>
+                        <span style="background:#fee2e2;color:#b91c1c;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:800;">Cần gọi ngay</span>
+                    </div>
+                    <strong style="display:block;font-size:26px;color:#b91c1c;margin-top:4px;"><?php echo $count_new; ?></strong>
+                </div>
+                <!-- Đang chăm sóc -->
+                <div style="background:#fff;border-left:5px solid #f59e0b;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size:12px;color:#b45309;font-weight:700;text-transform:uppercase;">Đang Tư Vấn</span>
+                    <strong style="display:block;font-size:26px;color:#b45309;margin-top:4px;"><?php echo $count_contacting; ?></strong>
+                </div>
+                <!-- Hẹn xem nhà -->
+                <div style="background:#fff;border-left:5px solid #8b5cf6;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size:12px;color:#6d28d9;font-weight:700;text-transform:uppercase;">Hẹn Xem Dự Án</span>
+                    <strong style="display:block;font-size:26px;color:#6d28d9;margin-top:4px;"><?php echo $count_appointment; ?></strong>
+                </div>
+                <!-- Đã chốt cọc -->
+                <div style="background:#fff;border-left:5px solid #10b981;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size:12px;color:#047857;font-weight:700;text-transform:uppercase;">Đã Chốt Cọc / VIP</span>
+                    <strong style="display:block;font-size:26px;color:#047857;margin-top:4px;"><?php echo $count_closed; ?></strong>
+                </div>
+            </div>
+
+            <!-- THANH TÌM KIẾM & BỘ LỌC -->
+            <div style="background:#ffffff;border:1px solid #e2e8f0;padding:14px 18px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:18px;">
+                <form method="get" action="" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <input type="hidden" name="page" value="sunshine-crm">
+                    
+                    <div style="flex:1;min-width:200px;">
+                        <input type="text" name="s" value="<?php echo esc_attr($search_kw); ?>" placeholder="🔍 Tìm theo Tên, SĐT, Email..." style="width:100%;padding:6px 12px;border:1px solid #cbd5e1;border-radius:5px;font-size:13.5px;">
+                    </div>
+
+                    <div>
+                        <select name="filter_status" style="padding:6px 10px;border:1px solid #cbd5e1;border-radius:5px;font-size:13px;">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="new" <?php selected($filter_status, 'new'); ?>>🔴 Mới tiếp nhận (Chưa gọi)</option>
+                            <option value="contacting" <?php selected($filter_status, 'contacting'); ?>>🟡 Đang liên hệ / Tư vấn</option>
+                            <option value="appointment" <?php selected($filter_status, 'appointment'); ?>>🟣 Hẹn xem dự án</option>
+                            <option value="closed" <?php selected($filter_status, 'closed'); ?>>🟢 Đã chốt cọc</option>
+                            <option value="unqualified" <?php selected($filter_status, 'unqualified'); ?>>⚪ Không nhu cầu / Sai số</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <select name="filter_project" style="padding:6px 10px;border:1px solid #cbd5e1;border-radius:5px;font-size:13px;">
+                            <option value="">-- Tất cả dự án --</option>
+                            <?php foreach ($unique_projects as $up) : ?>
+                                <option value="<?php echo esc_attr($up); ?>" <?php selected($filter_project, $up); ?>><?php echo esc_html($up); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="button" style="font-weight:700;">Lọc dữ liệu</button>
+                    <?php if (!empty($search_kw) || !empty($filter_status) || !empty($filter_project)) : ?>
+                        <a href="<?php echo admin_url('admin.php?page=sunshine-crm'); ?>" style="color:#64748b;text-decoration:none;font-size:13px;padding:4px 8px;">✕ Đặt lại</a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- BẢNG DANH SÁCH KHÁCH HÀNG -->
+            <?php if (empty($display_leads)) : ?>
+                <div style="background:#fff;padding:60px 20px;text-align:center;border-radius:8px;border:1px dashed #cbd5e1;">
+                    <div style="font-size:46px;margin-bottom:12px;">👥</div>
+                    <h3 style="margin:0 0 8px;color:#0f172a;font-size:17px;">Không tìm thấy khách hàng phù hợp</h3>
+                    <p style="color:#64748b;margin:0 0 16px;font-size:13.5px;">Chưa có khách hàng nào trong bộ lọc này hoặc chưa có lượt đăng ký mới.</p>
+                    <a href="<?php echo admin_url('admin.php?page=sunshine-crm-add'); ?>" class="button button-primary" style="background:#2563eb;border-color:#2563eb;font-weight:700;">
+                        + Thêm Khách Hàng Thủ Công
+                    </a>
+                </div>
+            <?php else : ?>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                    <table class="wp-list-table widefat fixed striped posts" style="border:none;">
+                        <thead>
+                            <tr>
+                                <th style="width:36px;text-align:center;">#</th>
+                                <th style="width:125px;">Thời gian</th>
+                                <th style="width:210px;">Khách hàng</th>
+                                <th style="width:140px;">Trạng thái CSKH</th>
+                                <th style="width:150px;">Nhu cầu quan tâm</th>
+                                <th style="width:170px;">Dự án</th>
+                                <th>Ghi chú tư vấn</th>
+                                <th style="width:120px;">Nguồn</th>
+                                <th style="width:80px;text-align:center;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $i = 1;
+                            foreach ($display_leads as $lead) : 
+                                $lid   = $lead['id'] ?? '';
+                                $phone = preg_replace('/[^0-9]/', '', $lead['phone'] ?? '');
+                                $st    = $lead['status'] ?? 'new';
+                                $note  = $lead['note'] ?? '';
+
+                                $st_badge = [
+                                    'new'         => ['bg' => '#fee2e2', 'color' => '#b91c1c', 'text' => '🔴 Mới tiếp nhận'],
+                                    'contacting'  => ['bg' => '#fef3c7', 'color' => '#92400e', 'text' => '🟡 Đang liên hệ'],
+                                    'appointment' => ['bg' => '#ede9fe', 'color' => '#6d28d9', 'text' => '🟣 Hẹn xem dự án'],
+                                    'closed'      => ['bg' => '#d1fae5', 'color' => '#065f46', 'text' => '🟢 Đã chốt cọc'],
+                                    'unqualified' => ['bg' => '#f1f5f9', 'color' => '#64748b', 'text' => '⚪ Không nhu cầu'],
+                                ][$st] ?? ['bg' => '#fee2e2', 'color' => '#b91c1c', 'text' => '🔴 Mới tiếp nhận'];
+                            ?>
+                                <tr>
+                                    <td style="text-align:center;font-weight:700;color:#94a3b8;"><?php echo $i++; ?></td>
+                                    <td style="font-size:12px;color:#64748b;">
+                                        <?php echo esc_html($lead['time'] ?? ''); ?>
+                                    </td>
+                                    <td>
+                                        <strong style="font-size:14.5px;color:#0b2246;display:block;margin-bottom:4px;"><?php echo esc_html($lead['name'] ?? 'Khách Hàng'); ?></strong>
+                                        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:3px;">
+                                            <a href="tel:<?php echo esc_attr($phone); ?>" style="font-weight:800;color:#0284c7;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:3px;">
+                                                📞 <?php echo esc_html($lead['phone'] ?? ''); ?>
+                                            </a>
+                                            <?php if ($phone) : ?>
+                                                <a href="https://zalo.me/<?php echo esc_attr($phone); ?>" target="_blank" style="background:#0068ff;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:4px;text-decoration:none;">Zalo</a>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($lead['email'])) : ?>
+                                            <div style="font-size:11.5px;color:#64748b;overflow:hidden;text-overflow:ellipsis;"><?php echo esc_html($lead['email']); ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span style="display:inline-block;background:<?php echo $st_badge['bg']; ?>;color:<?php echo $st_badge['color']; ?>;padding:3px 9px;border-radius:12px;font-size:12px;font-weight:800;">
+                                            <?php echo $st_badge['text']; ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span style="display:inline-block;background:#f8fafc;color:#1e293b;border:1px solid #e2e8f0;font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:4px;">
+                                            <?php echo esc_html($lead['demand'] ?? 'Chung'); ?>
+                                        </span>
+                                        <span style="display:block;font-size:11px;color:#64748b;margin-top:3px;">
+                                            <?php echo (($lead['type'] ?? '') === 'thap_tang') ? 'Thấp tầng' : 'Cao tầng'; ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong style="color:#0f172a;font-size:13.5px;line-height:1.3;display:block;"><?php echo esc_html($lead['project'] ?? 'Dự án'); ?></strong>
+                                    </td>
+                                    <td>
+                                        <!-- Form ghi chú & đổi trạng thái nhanh -->
+                                        <form method="post" action="" style="display:flex;flex-direction:column;gap:5px;">
+                                            <?php wp_nonce_field('crm_update_lead_nonce'); ?>
+                                            <input type="hidden" name="crm_update_lead" value="1">
+                                            <input type="hidden" name="lead_id" value="<?php echo esc_attr($lid); ?>">
+                                            
+                                            <div style="display:flex;gap:5px;">
+                                                <select name="new_status" style="font-size:11.5px;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;width:130px;">
+                                                    <option value="new" <?php selected($st, 'new'); ?>>Mới</option>
+                                                    <option value="contacting" <?php selected($st, 'contacting'); ?>>Đang liên hệ</option>
+                                                    <option value="appointment" <?php selected($st, 'appointment'); ?>>Hẹn xem</option>
+                                                    <option value="closed" <?php selected($st, 'closed'); ?>>Đã cọc</option>
+                                                    <option value="unqualified" <?php selected($st, 'unqualified'); ?>>Không nhu cầu</option>
+                                                </select>
+                                                <button type="submit" class="button button-small" style="padding:0 8px;font-size:11px;font-weight:700;">Lưu</button>
+                                            </div>
+                                            <input type="text" name="new_note" value="<?php echo esc_attr($note); ?>" placeholder="Thêm ghi chú khách..." style="font-size:12px;padding:3px 6px;border:1px solid #e2e8f0;border-radius:3px;width:100%;">
+                                        </form>
+                                    </td>
+                                    <td style="font-size:12px;color:#64748b;">
+                                        <?php if (!empty($lead['source_url'])) : ?>
+                                            <a href="<?php echo esc_url($lead['source_url']); ?>" target="_blank" style="color:#2563eb;text-decoration:none;font-weight:600;display:inline-block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Xem trang ↗</a>
+                                        <?php else : ?>
+                                            <span>Thêm thủ công</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=sunshine-crm&action=delete&id=' . $lid), 'sunshine_crm_delete_lead'); ?>" onclick="return confirm('Bạn có chắc chắn muốn xóa khách hàng này không?');" style="color:#ef4444;text-decoration:none;font-size:18px;font-weight:bold;display:inline-block;padding:2px 6px;" title="Xóa khách hàng">
+                                            &times;
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * TRANG 2: THÊM THÔNG TIN KHÁCH HÀNG (CRM ADD)
+     */
+    public static function render_crm_add_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Bạn không có quyền truy cập trang này.');
+        }
+
+        $error = '';
+
+        // Xử lý Form thêm khách hàng
+        if (isset($_POST['crm_add_customer']) && check_admin_referer('crm_add_customer_nonce')) {
+            $name    = sanitize_text_field(wp_unslash($_POST['c_name'] ?? ''));
+            $phone   = sanitize_text_field(wp_unslash($_POST['c_phone'] ?? ''));
+            $email   = sanitize_email(wp_unslash($_POST['c_email'] ?? ''));
+            $project = sanitize_text_field(wp_unslash($_POST['c_project'] ?? ''));
+            $type    = sanitize_text_field(wp_unslash($_POST['c_type'] ?? 'cao_tang'));
+            $demand  = sanitize_text_field(wp_unslash($_POST['c_demand'] ?? ''));
+            $status  = sanitize_text_field(wp_unslash($_POST['c_status'] ?? 'new'));
+            $note    = sanitize_textarea_field(wp_unslash($_POST['c_note'] ?? ''));
+            $source  = sanitize_text_field(wp_unslash($_POST['c_source'] ?? 'Thêm thủ công'));
+
+            if (empty($name) || empty($phone)) {
+                $error = 'Vui lòng nhập đầy đủ Họ và tên cùng Số điện thoại của khách.';
+            } else {
+                $leads = get_option('sunshine_customer_leads', []);
+                if (!is_array($leads)) { $leads = []; }
+
+                $new_lead = [
+                    'id'         => 'lead_' . substr(md5(uniqid(mt_rand(), true)), 0, 8),
+                    'form'       => 'manual_crm',
+                    'name'       => $name,
+                    'phone'      => $phone,
+                    'email'      => $email,
+                    'project'    => $project ?: 'Khách tư vấn chung',
+                    'type'       => $type,
+                    'demand'     => $demand ?: 'Tư vấn dự án',
+                    'status'     => $status,
+                    'note'       => $note,
+                    'source_url' => $source,
+                    'time'       => current_time('mysql'),
+                    'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+                ];
+
+                array_unshift($leads, $new_lead);
+                update_option('sunshine_customer_leads', $leads);
+
+                wp_safe_redirect(admin_url('admin.php?page=sunshine-crm&added=1'));
+                exit;
+            }
+        }
+
+        // Lấy danh sách dự án hiện có
+        $projects = get_posts([
+            'post_type'      => 'du_an',
+            'posts_per_page' => 50,
+            'post_status'    => 'publish',
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+        ]);
+        ?>
+        <div class="wrap" style="max-width:900px;margin-top:18px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                <a href="<?php echo admin_url('admin.php?page=sunshine-crm'); ?>" style="color:#64748b;text-decoration:none;font-weight:700;">&larr; Quay lại danh sách CRM</a>
+            </div>
+
+            <h1 style="font-size:24px;font-weight:800;color:#0b2246;margin:0 0 16px;display:flex;align-items:center;gap:10px;">
+                <span class="dashicons dashicons-businessman" style="font-size:30px;color:#2563eb;"></span>
+                Thêm Thông Tin Khách Hàng Mới
+            </h1>
+
+            <?php if (!empty($error)) : ?>
+                <div class="notice notice-error is-dismissible"><p><?php echo esc_html($error); ?></p></div>
+            <?php endif; ?>
+
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:26px 30px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <form method="post" action="">
+                    <?php wp_nonce_field('crm_add_customer_nonce'); ?>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;">
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                👤 Họ và tên khách hàng <span style="color:#ef4444;">*</span>:
+                            </label>
+                            <input type="text" name="c_name" required placeholder="ví dụ: Anh Hoàng / Chị Mai" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                📞 Số điện thoại / Zalo <span style="color:#ef4444;">*</span>:
+                            </label>
+                            <input type="tel" name="c_phone" required placeholder="ví dụ: 0912345678" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;">
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                📧 Email khách hàng (tùy chọn):
+                            </label>
+                            <input type="email" name="c_email" placeholder="khachhang@gmail.com" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                🏢 Dự án khách quan tâm:
+                            </label>
+                            <select name="c_project" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                                <option value="">-- Chọn dự án --</option>
+                                <?php foreach ($projects as $p) : ?>
+                                    <option value="<?php echo esc_attr($p->post_title); ?>"><?php echo esc_html($p->post_title); ?></option>
+                                <?php endforeach; ?>
+                                <option value="Handico Sunshine New Hà Nội">Handico Sunshine New Hà Nội</option>
+                                <option value="Noble Palace Long Biên">Noble Palace Long Biên</option>
+                                <option value="Hinode Solera Phạm Hùng">Hinode Solera Phạm Hùng</option>
+                                <option value="Khách tư vấn chung">Khách tư vấn chung</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;">
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                🏗️ Phân khúc sản phẩm:
+                            </label>
+                            <select name="c_type" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                                <option value="cao_tang">Cao tầng (Căn hộ / Chung cư / Duplex)</option>
+                                <option value="thap_tang">Thấp tầng (Liền kề / Biệt thự / Shophouse)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                🎯 Nhu cầu quan tâm chi tiết:
+                            </label>
+                            <input type="text" name="c_demand" placeholder="ví dụ: Căn 2PN view hồ / Biệt thự song lập" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;">
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                🚦 Trạng thái chăm sóc ban đầu:
+                            </label>
+                            <select name="c_status" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                                <option value="new">🔴 Mới tiếp nhận (Chưa gọi)</option>
+                                <option value="contacting">🟡 Đang liên hệ / Đã tư vấn sơ bộ</option>
+                                <option value="appointment">🟣 Hẹn xem nhà mẫu / Sa bàn</option>
+                                <option value="closed">🟢 Đã cọc / Khách VIP</option>
+                                <option value="unqualified">⚪ Không nhu cầu / Sai số</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                                🌐 Nguồn khách hàng:
+                            </label>
+                            <input type="text" name="c_source" value="Nhân viên thêm thủ công" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:24px;">
+                        <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13.5px;">
+                            📝 Ghi chú tư vấn (Yêu cầu tài chính, hướng nhà, thời gian gọi lại...):
+                        </label>
+                        <textarea name="c_note" rows="3" placeholder="Nhập các thông tin đặc biệt của khách hàng để tiện theo dõi..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;"></textarea>
+                    </div>
+
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <button type="submit" name="crm_add_customer" value="1" class="button button-primary" style="background:#2563eb;border-color:#2563eb;font-weight:800;padding:7px 24px;font-size:14.5px;">
+                            💾 Lưu Khách Hàng Vào CRM
+                        </button>
+                        <a href="<?php echo admin_url('admin.php?page=sunshine-crm'); ?>" class="button" style="padding:7px 16px;">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * TRANG 3: CÀI ĐẶT TELEGRAM & THÔNG BÁO EMAIL (CRM SETTINGS)
+     */
+    public static function render_crm_settings_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Bạn không có quyền truy cập trang này.');
+        }
+
+        $notice = '';
+        $notice_type = 'success';
+
+        // Xử lý Lưu Cài Đặt
+        if (isset($_POST['crm_save_settings']) && check_admin_referer('crm_save_settings_nonce')) {
+            $tele_token     = sanitize_text_field(wp_unslash($_POST['sunshine_telegram_bot_token'] ?? ''));
+            $tele_chat      = sanitize_text_field(wp_unslash($_POST['sunshine_telegram_chat_id'] ?? ''));
+            $emails         = sanitize_text_field(wp_unslash($_POST['sunshine_lead_notification_emails'] ?? ''));
+            $smtp_enabled   = isset($_POST['sunshine_smtp_enabled']) ? 1 : 0;
+            $smtp_host      = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_host'] ?? 'smtp.gmail.com'));
+            $smtp_port      = (int) ($_POST['sunshine_smtp_port'] ?? 465);
+            $smtp_enc       = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_enc'] ?? 'ssl'));
+            $smtp_user      = sanitize_email(wp_unslash($_POST['sunshine_smtp_user'] ?? ''));
+            $smtp_pass      = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_pass'] ?? ''));
+            $smtp_from_name = sanitize_text_field(wp_unslash($_POST['sunshine_smtp_from_name'] ?? 'Sunshine Group BĐS'));
+
+            update_option('sunshine_telegram_bot_token', $tele_token);
+            update_option('sunshine_telegram_chat_id', $tele_chat);
+            update_option('sunshine_lead_notification_emails', $emails);
             update_option('sunshine_smtp_enabled', $smtp_enabled);
             update_option('sunshine_smtp_host', $smtp_host);
             update_option('sunshine_smtp_port', $smtp_port);
@@ -1237,371 +1897,205 @@ class Sunshine_Project_Manager {
                 update_option('sunshine_smtp_pass', $smtp_pass);
             }
             update_option('sunshine_smtp_from_name', $smtp_from_name);
-            update_option('sunshine_telegram_bot_token', $tele_token);
-            update_option('sunshine_telegram_chat_id', $tele_chat);
 
-            // Đồng bộ luôn admin_email nếu user nhập email quản trị
-            if (!empty($notification_emails)) {
-                $first_email = trim(explode(',', $notification_emails)[0]);
-                if (is_email($first_email)) {
-                    update_option('admin_email', $first_email);
+            // Đồng bộ admin_email
+            if (!empty($emails)) {
+                $first = trim(explode(',', $emails)[0]);
+                if (is_email($first)) {
+                    update_option('admin_email', $first);
                     delete_option('new_admin_email');
                     delete_option('adminhash');
                 }
             }
 
-            $notice = '✓ Đã lưu thành công các cài đặt nhận thông báo và cấu hình SMTP!';
+            $notice = '✓ Đã lưu thành công các cài đặt thông báo Telegram và Email!';
         }
 
-        // Xử lý Gửi Email Thử Nghiệm
-        if (isset($_POST['sunshine_send_test']) && check_admin_referer('sunshine_test_email_nonce')) {
+        // Xử lý Gửi Thử Telegram
+        if (isset($_POST['crm_test_telegram']) && check_admin_referer('crm_test_tele_nonce')) {
+            $tele_res = self::send_test_telegram();
+            if ($tele_res['success']) {
+                $notice = '🎉 Tuyệt vời! Tin nhắn kiểm tra đã được gửi tới Telegram của bạn thành công!';
+                $notice_type = 'success';
+            } else {
+                $notice = '❌ Gửi Telegram thất bại: ' . esc_html($tele_res['error'] ?? 'Vui lòng kiểm tra lại Token hoặc Chat ID.');
+                $notice_type = 'error';
+            }
+        }
+
+        // Xử lý Gửi Thử Email
+        if (isset($_POST['crm_test_email']) && check_admin_referer('crm_test_email_nonce')) {
             $test_to = sanitize_email(wp_unslash($_POST['test_email_to'] ?? ''));
             if (empty($test_to)) {
                 $test_to = get_option('sunshine_lead_notification_emails', 'luumui1234@gmail.com');
                 $test_to = trim(explode(',', $test_to)[0]);
             }
-
-            $res = self::send_test_email($test_to);
-            if ($res['success']) {
-                $notice = '🎉 Tuyệt vời! Đã gửi thành công 1 email kiểm tra tới <strong>' . esc_html($test_to) . '</strong>. Hãy kiểm tra Hộp thư đến (Inbox) của bạn ngay bây giờ!';
+            $mail_res = self::send_test_email($test_to);
+            if ($mail_res['success']) {
+                $notice = '🎉 Tuyệt vời! Đã gửi thành công email kiểm tra tới <strong>' . esc_html($test_to) . '</strong>. Hãy kiểm tra Hộp thư đến (Inbox)!';
                 $notice_type = 'success';
             } else {
-                $err_msg = $res['error'] ?: 'Hàm gửi mail trên hosting bị chặn hoặc thông số SMTP chưa chính xác.';
-                $notice = '❌ Gửi thử thất bại: ' . esc_html($err_msg) . '<br><em>Mẹo: Hãy kích hoạt mục "Bật gửi thư qua SMTP" và nhập Mật khẩu ứng dụng Gmail 16 ký tự để gửi thành công 100%.</em>';
+                $notice = '❌ Gửi email thất bại: ' . esc_html($mail_res['error'] ?: 'Lỗi cấu hình SMTP hoặc máy chủ.') . '<br><em>Hãy kiểm tra lại Mật khẩu ứng dụng Gmail 16 ký tự.</em>';
                 $notice_type = 'error';
             }
         }
 
-        // Xử lý xuất Excel / CSV
-        if (isset($_GET['action']) && $_GET['action'] === 'export_csv') {
-            check_admin_referer('sunshine_export_leads');
-            $leads = get_option('sunshine_customer_leads', []);
-            if (!is_array($leads)) { $leads = []; }
-
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename=danh-sach-khach-hang-' . date('Y-m-d') . '.csv');
-            $output = fopen('php://output', 'w');
-            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM cho Excel
-            fputcsv($output, ['STT', 'Thời gian', 'Họ và tên', 'Số điện thoại', 'Nhu cầu quan tâm', 'Phân khúc', 'Dự án', 'Email', 'Link nguồn', 'IP']);
-            $i = 1;
-            foreach ($leads as $l) {
-                fputcsv($output, [
-                    $i++,
-                    $l['time'] ?? '',
-                    $l['name'] ?? '',
-                    $l['phone'] ?? '',
-                    $l['demand'] ?? '',
-                    (($l['type'] ?? '') === 'thap_tang') ? 'Thấp tầng' : 'Cao tầng',
-                    $l['project'] ?? '',
-                    $l['email'] ?? '',
-                    $l['source_url'] ?? '',
-                    $l['ip'] ?? ''
-                ]);
-            }
-            fclose($output);
-            exit;
-        }
-
-        // Xử lý xóa 1 lead
-        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['index'])) {
-            check_admin_referer('sunshine_delete_lead');
-            $leads = get_option('sunshine_customer_leads', []);
-            $idx = (int) $_GET['index'];
-            if (isset($leads[$idx])) {
-                array_splice($leads, $idx, 1);
-                update_option('sunshine_customer_leads', $leads);
-            }
-            wp_safe_redirect(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&deleted=1'));
-            exit;
-        }
-
-        // Xử lý xóa tất cả
-        if (isset($_GET['action']) && $_GET['action'] === 'clear_all') {
-            check_admin_referer('sunshine_clear_leads');
-            update_option('sunshine_customer_leads', []);
-            wp_safe_redirect(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&cleared=1'));
-            exit;
-        }
-
-        $leads = get_option('sunshine_customer_leads', []);
-        if (!is_array($leads)) { $leads = []; }
-
-        $total = count($leads);
-        $cao_tang_count = 0;
-        $thap_tang_count = 0;
-        foreach ($leads as $l) {
-            if (($l['type'] ?? '') === 'thap_tang') {
-                $thap_tang_count++;
-            } else {
-                $cao_tang_count++;
-            }
-        }
-
-        // Cài đặt hiện tại
-        $saved_emails     = get_option('sunshine_lead_notification_emails', 'luumui1234@gmail.com');
-        $smtp_enabled     = (int) get_option('sunshine_smtp_enabled', 0);
-        $smtp_host        = get_option('sunshine_smtp_host', 'smtp.gmail.com');
-        $smtp_port        = (int) get_option('sunshine_smtp_port', 465);
-        $smtp_enc         = get_option('sunshine_smtp_enc', 'ssl');
-        $smtp_user        = get_option('sunshine_smtp_user', 'luumui1234@gmail.com');
-        $smtp_pass        = get_option('sunshine_smtp_pass', '');
-        $smtp_from_name   = get_option('sunshine_smtp_from_name', 'Sunshine Group BĐS');
-        $tele_token       = get_option('sunshine_telegram_bot_token', '');
-        $tele_chat        = get_option('sunshine_telegram_chat_id', '');
-        $last_mail_status = get_option('sunshine_last_mail_status', []);
+        $tele_token     = get_option('sunshine_telegram_bot_token', '');
+        $tele_chat      = get_option('sunshine_telegram_chat_id', '');
+        $emails         = get_option('sunshine_lead_notification_emails', 'luumui1234@gmail.com');
+        $smtp_enabled   = (int) get_option('sunshine_smtp_enabled', 0);
+        $smtp_host      = get_option('sunshine_smtp_host', 'smtp.gmail.com');
+        $smtp_port      = (int) get_option('sunshine_smtp_port', 465);
+        $smtp_enc       = get_option('sunshine_smtp_enc', 'ssl');
+        $smtp_user      = get_option('sunshine_smtp_user', 'luumui1234@gmail.com');
+        $smtp_pass      = get_option('sunshine_smtp_pass', '');
+        $smtp_from_name = get_option('sunshine_smtp_from_name', 'Sunshine Group BĐS');
         ?>
-        <div class="wrap" style="max-width:1300px;margin-top:20px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
-                <h1 style="display:flex;align-items:center;gap:10px;font-size:24px;font-weight:800;color:#0b2246;margin:0;">
-                    <span class="dashicons dashicons-id-alt" style="font-size:32px;width:32px;height:32px;color:#d4af37;"></span>
-                    Quản Lý Khách Hàng Đăng Ký (Leads) & Cài Đặt Nhận Mail
-                </h1>
-                <div style="display:flex;gap:10px;">
-                    <?php if ($total > 0) : ?>
-                        <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=export_csv'), 'sunshine_export_leads'); ?>" class="button button-primary" style="background:#0b2246;border-color:#0b2246;font-weight:700;padding:4px 14px;">
-                            📥 Xuất File Excel (CSV)
-                        </a>
-                        <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=clear_all'), 'sunshine_clear_leads'); ?>" class="button" onclick="return confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách khách hàng này không?');" style="color:#dc2626;">
-                            Xóa tất cả
-                        </a>
-                    <?php endif; ?>
-                </div>
+        <div class="wrap" style="max-width:1050px;margin-top:18px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;">
+                <a href="<?php echo admin_url('admin.php?page=sunshine-crm'); ?>" style="color:#64748b;text-decoration:none;font-weight:700;">&larr; Quay lại danh sách CRM</a>
             </div>
+
+            <h1 style="font-size:24px;font-weight:800;color:#0b2246;margin:0 0 16px;display:flex;align-items:center;gap:10px;">
+                <span class="dashicons dashicons-admin-settings" style="font-size:32px;color:#2563eb;"></span>
+                Cài Đặt Thông Báo (Telegram & Email SMTP)
+            </h1>
 
             <?php if (!empty($notice)) : ?>
-                <div class="notice notice-<?php echo esc_attr($notice_type); ?> is-dismissible" style="padding:12px 16px;border-left-width:5px;">
-                    <p style="font-size:14px;margin:0;"><?php echo wp_kses_post($notice); ?></p>
-                </div>
+                <div class="notice notice-<?php echo esc_attr($notice_type); ?> is-dismissible" style="padding:10px 14px;"><p style="margin:0;font-weight:600;"><?php echo wp_kses_post($notice); ?></p></div>
             <?php endif; ?>
 
-            <?php if (isset($_GET['deleted'])) : ?>
-                <div class="notice notice-success is-dismissible"><p>✓ Đã xóa thành công thông tin khách hàng.</p></div>
-            <?php endif; ?>
-            <?php if (isset($_GET['cleared'])) : ?>
-                <div class="notice notice-success is-dismissible"><p>✓ Đã làm trống toàn bộ danh sách khách hàng.</p></div>
-            <?php endif; ?>
+            <form method="post" action="">
+                <?php wp_nonce_field('crm_save_settings_nonce'); ?>
 
-            <!-- Thống kê tổng quan -->
-            <div style="background:#fff;border-left:4px solid #d4af37;padding:16px 22px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-                <div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap;">
-                    <div>
-                        <span style="font-size:11.5px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Tổng khách đăng ký</span>
-                        <strong style="font-size:24px;color:#0b2246;"><?php echo $total; ?> khách</strong>
-                    </div>
-                    <div style="border-left:1px solid #e2e8f0;padding-left:26px;">
-                        <span style="font-size:11.5px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Căn hộ Cao Tầng</span>
-                        <strong style="font-size:22px;color:#0284c7;"><?php echo $cao_tang_count; ?></strong>
-                    </div>
-                    <div style="border-left:1px solid #e2e8f0;padding-left:26px;">
-                        <span style="font-size:11.5px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Dòng Thấp Tầng</span>
-                        <strong style="font-size:22px;color:#16a34a;"><?php echo $thap_tang_count; ?></strong>
-                    </div>
-                    <div style="border-left:1px solid #e2e8f0;padding-left:26px;">
-                        <span style="font-size:11.5px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Email nhận thông báo hiện tại</span>
-                        <strong style="font-size:14px;color:#0f172a;background:#f1f5f9;padding:4px 10px;border-radius:4px;display:inline-block;margin-top:2px;"><?php echo esc_html($saved_emails); ?></strong>
-                    </div>
-                    <div style="border-left:1px solid #e2e8f0;padding-left:26px;">
-                        <span style="font-size:11.5px;color:#64748b;display:block;text-transform:uppercase;font-weight:700;">Trạng thái SMTP</span>
-                        <?php if ($smtp_enabled) : ?>
-                            <span style="color:#16a34a;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:4px;">● Đang bật SMTP (An toàn 100%)</span>
-                        <?php else : ?>
-                            <span style="color:#d97706;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:4px;">⚠️ Dùng PHP Mail mặc định (Nên bật SMTP)</span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BỐ CỤC 2 CỘT: CÀI ĐẶT GỬI MAIL (TRÁI) & THỬ NGHIỆM / DANH SÁCH LEADS (PHẢI) -->
-            <div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;margin-bottom:24px;">
-                
-                <!-- CỘT 1: FORM CÀI ĐẶT EMAIL & SMTP -->
-                <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                    <h2 style="font-size:17px;font-weight:800;color:#0b2246;margin:0 0 16px;display:flex;align-items:center;gap:8px;border-bottom:2px solid #f1f5f9;padding-bottom:12px;">
-                        <span class="dashicons dashicons-email-alt" style="color:#d4af37;"></span> Cài Đặt Nhận Mail & SMTP
-                    </h2>
-
-                    <form method="post" action="">
-                        <?php wp_nonce_field('sunshine_leads_settings_nonce'); ?>
-
-                        <!-- Email nhận -->
-                        <div style="margin-bottom:18px;">
-                            <label style="display:block;font-weight:700;color:#1e293b;font-size:13.5px;margin-bottom:6px;">
-                                📩 Email Nhận Thông Báo Khách:
-                            </label>
-                            <input type="text" name="sunshine_lead_notification_emails" value="<?php echo esc_attr($saved_emails); ?>" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;" placeholder="ví dụ: luumui1234@gmail.com" required>
-                            <span style="font-size:12px;color:#64748b;display:block;margin-top:4px;">Có thể điền nhiều email, cách nhau bằng dấu phẩy.</span>
+                <!-- KHỐI 1: CÀI ĐẶT TELEGRAM BOT -->
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.05);margin-bottom:22px;">
+                    <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #f1f5f9;padding-bottom:12px;margin-bottom:18px;">
+                        <span style="font-size:24px;">✈️</span>
+                        <div>
+                            <h2 style="font-size:17px;font-weight:800;color:#0b2246;margin:0;">Thông Báo Qua Telegram (Khuyên Dùng Cho Môi Giới BĐS)</h2>
+                            <span style="font-size:12.5px;color:#64748b;">Mỗi khi khách đăng ký, tin nhắn báo chuông điện thoại lập tức trong 1 giây kèm số điện thoại để gọi ngay.</span>
                         </div>
+                    </div>
 
-                        <!-- Cấu hình SMTP -->
-                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:18px;">
-                            <label style="display:flex;align-items:center;gap:8px;font-weight:800;color:#0b2246;font-size:14px;cursor:pointer;margin-bottom:10px;">
-                                <input type="checkbox" name="sunshine_smtp_enabled" value="1" <?php checked($smtp_enabled, 1); ?> id="kbds_smtp_toggle" onchange="document.getElementById('kbds_smtp_box').style.display = this.checked ? 'block' : 'none';">
-                                Bật Gửi Qua Gmail SMTP
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13px;">
+                                🔑 Telegram Bot Token:
                             </label>
-                            <span style="font-size:12px;color:#475569;line-height:1.5;display:block;">
-                                💡 <strong>Khuyên dùng:</strong> Hosting dùng PHP Mail rất dễ bị Gmail chặn. Bật SMTP giúp email gửi trực tiếp từ máy chủ Google vào thẳng <strong>Hộp thư đến (Inbox) 100%</strong>.
-                            </span>
+                            <input type="text" name="sunshine_telegram_bot_token" value="<?php echo esc_attr($tele_token); ?>" placeholder="ví dụ: 789123456:AAFlk_xyz..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13px;">
+                                💬 Chat ID (Nhóm hoặc Cá nhân):
+                            </label>
+                            <input type="text" name="sunshine_telegram_chat_id" value="<?php echo esc_attr($tele_chat); ?>" placeholder="ví dụ: 123456789 hoặc -100123456789" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;">
+                        </div>
+                    </div>
 
-                            <div id="kbds_smtp_box" style="display:<?php echo $smtp_enabled ? 'block' : 'none'; ?>;margin-top:14px;border-top:1px dashed #cbd5e1;padding-top:14px;">
-                                <div style="margin-bottom:12px;">
-                                    <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">SMTP Host:</label>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:12.5px;color:#334155;line-height:1.6;">
+                        📌 <strong>Hướng dẫn lấy Token & Chat ID Telegram (1 phút):</strong><br>
+                        1. Mở app Telegram, tìm kiếm <strong>@BotFather</strong> -> bấm <code>/newbot</code> -> đặt tên bot để nhận <strong>Bot Token</strong>.<br>
+                        2. Tìm bot <strong>@userinfobot</strong> hoặc <strong>@getmyid_bot</strong> trên Telegram -> bấm Start để lấy số <strong>Chat ID</strong> của bạn (hoặc thêm bot vào nhóm kinh doanh để lấy Chat ID nhóm).
+                    </div>
+                </div>
+
+                <!-- KHỐI 2: CÀI ĐẶT EMAIL & GMAIL SMTP -->
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.05);margin-bottom:24px;">
+                    <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #f1f5f9;padding-bottom:12px;margin-bottom:18px;">
+                        <span style="font-size:24px;">📩</span>
+                        <div>
+                            <h2 style="font-size:17px;font-weight:800;color:#0b2246;margin:0;">Thông Báo Qua Email & Cấu Hình Gmail SMTP</h2>
+                            <span style="font-size:12.5px;color:#64748b;">Gửi email HTML chi tiết khi có khách hàng đăng ký nhận bảng giá & tài liệu.</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block;font-weight:700;color:#1e293b;margin-bottom:6px;font-size:13px;">
+                            Email nhận thông báo khách:
+                        </label>
+                        <input type="text" name="sunshine_lead_notification_emails" value="<?php echo esc_attr($emails); ?>" placeholder="ví dụ: luumui1234@gmail.com" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                        <span style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Có thể điền nhiều email phân cách nhau bằng dấu phẩy.</span>
+                    </div>
+
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-weight:800;color:#0b2246;font-size:14px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" name="sunshine_smtp_enabled" value="1" <?php checked($smtp_enabled, 1); ?> id="crm_smtp_toggle" onchange="document.getElementById('crm_smtp_box').style.display = this.checked ? 'block' : 'none';">
+                            Bật Gửi Qua Gmail SMTP (Đảm bảo 100% vào Hộp thư đến Inbox)
+                        </label>
+
+                        <div id="crm_smtp_box" style="display:<?php echo $smtp_enabled ? 'block' : 'none'; ?>;margin-top:14px;border-top:1px dashed #cbd5e1;padding-top:14px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+                                <div>
+                                    <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">SMTP Host:</label>
                                     <input type="text" name="sunshine_smtp_host" value="<?php echo esc_attr($smtp_host); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
                                 </div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div>
-                                        <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">Port:</label>
+                                        <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Port:</label>
                                         <input type="number" name="sunshine_smtp_port" value="<?php echo esc_attr($smtp_port); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
                                     </div>
                                     <div>
-                                        <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">Mã hóa:</label>
+                                        <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Mã hóa:</label>
                                         <select name="sunshine_smtp_enc" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
-                                            <option value="ssl" <?php selected($smtp_enc, 'ssl'); ?>>SSL (Port 465)</option>
-                                            <option value="tls" <?php selected($smtp_enc, 'tls'); ?>>TLS (Port 587)</option>
+                                            <option value="ssl" <?php selected($smtp_enc, 'ssl'); ?>>SSL (465)</option>
+                                            <option value="tls" <?php selected($smtp_enc, 'tls'); ?>>TLS (587)</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">Tài khoản Gmail gửi:</label>
-                                    <input type="email" name="sunshine_smtp_user" value="<?php echo esc_attr($smtp_user); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;" placeholder="luumui1234@gmail.com">
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+                                <div>
+                                    <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Tài khoản Gmail gửi:</label>
+                                    <input type="email" name="sunshine_smtp_user" value="<?php echo esc_attr($smtp_user); ?>" placeholder="luumui1234@gmail.com" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
                                 </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">
-                                        Mật khẩu ứng dụng (App Password):
-                                    </label>
-                                    <input type="password" name="sunshine_smtp_pass" value="<?php echo esc_attr($smtp_pass); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;" placeholder="<?php echo !empty($smtp_pass) ? '••••••••••••••••' : '16 ký tự mật khẩu ứng dụng Gmail'; ?>">
-                                    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11.5px;color:#1e40af;line-height:1.5;">
-                                        📌 <strong>Cách lấy Mật khẩu ứng dụng Gmail (1 phút):</strong><br>
-                                        1. Vào Google Account -> Bảo mật -> Bật Xác minh 2 bước.<br>
-                                        2. Tìm kiếm mục <strong>"Mật khẩu ứng dụng" (App passwords)</strong>.<br>
-                                        3. Đặt tên <em>Website Sunshine</em> -> Nhấn Tạo -> Sao chép 16 chữ cái dán vào đây.
-                                    </div>
-                                </div>
-                                <div style="margin-bottom:6px;">
-                                    <label style="display:block;font-size:12.5px;font-weight:700;color:#334155;margin-bottom:4px;">Tên người gửi:</label>
-                                    <input type="text" name="sunshine_smtp_from_name" value="<?php echo esc_attr($smtp_from_name); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
+                                <div>
+                                    <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Mật khẩu ứng dụng (App Password 16 ký tự):</label>
+                                    <input type="password" name="sunshine_smtp_pass" value="<?php echo esc_attr($smtp_pass); ?>" placeholder="<?php echo !empty($smtp_pass) ? '••••••••••••••••' : '16 chữ cái từ Google Account'; ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Telegram Bot (Tùy chọn) -->
-                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:18px;">
-                            <label style="display:block;font-weight:700;color:#0b2246;font-size:13px;margin-bottom:6px;">
-                                ✈️ Báo qua Telegram (Tùy chọn):
-                            </label>
-                            <input type="text" name="sunshine_telegram_bot_token" value="<?php echo esc_attr($tele_token); ?>" style="width:100%;padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;margin-bottom:8px;" placeholder="Bot Token (từ @BotFather)">
-                            <input type="text" name="sunshine_telegram_chat_id" value="<?php echo esc_attr($tele_chat); ?>" style="width:100%;padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;" placeholder="Chat ID nhóm hoặc cá nhân">
-                        </div>
-
-                        <button type="submit" name="sunshine_save_settings" value="1" class="button button-primary" style="width:100%;background:#0b2246;border-color:#0b2246;font-weight:700;padding:6px;font-size:14px;">
-                            💾 Lưu Cài Đặt Thông Báo
-                        </button>
-                    </form>
-
-                    <!-- Form Gửi Test -->
-                    <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:16px;">
-                        <h3 style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 8px;">🧪 Thử Nghiệm Gửi Mail Kiểm Tra</h3>
-                        <form method="post" action="">
-                            <?php wp_nonce_field('sunshine_test_email_nonce'); ?>
-                            <div style="display:flex;gap:6px;margin-bottom:8px;">
-                                <input type="email" name="test_email_to" value="<?php echo esc_attr(trim(explode(',', $saved_emails)[0])); ?>" style="flex:1;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;" placeholder="Nhập email nhận thử">
-                                <button type="submit" name="sunshine_send_test" value="1" class="button" style="font-weight:700;white-space:nowrap;">
-                                    Gửi Thử
-                                </button>
+                            <div style="margin-bottom:6px;">
+                                <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Tên người gửi:</label>
+                                <input type="text" name="sunshine_smtp_from_name" value="<?php echo esc_attr($smtp_from_name); ?>" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- CỘT 2: BẢNG DANH SÁCH KHÁCH HÀNG ĐĂNG KÝ (LEADS) -->
-                <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                    <h2 style="font-size:17px;font-weight:800;color:#0b2246;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f1f5f9;padding-bottom:12px;">
-                        <span style="display:flex;align-items:center;gap:8px;">
-                            <span class="dashicons dashicons-list-view" style="color:#d4af37;"></span> Danh Sách Khách Đăng Ký Mới Nhất
-                        </span>
-                        <span style="font-size:12.5px;color:#64748b;font-weight:normal;">Tự động lưu từ mọi Form trên web</span>
-                    </h2>
+                <div style="display:flex;gap:12px;margin-bottom:24px;">
+                    <button type="submit" name="crm_save_settings" value="1" class="button button-primary" style="background:#2563eb;border-color:#2563eb;font-weight:800;padding:8px 26px;font-size:14.5px;">
+                        💾 Lưu Tất Cả Cài Đặt
+                    </button>
+                </div>
+            </form>
 
-                    <?php if (empty($leads)) : ?>
-                        <div style="background:#f8fafc;padding:60px 20px;text-align:center;border-radius:8px;border:1px dashed #cbd5e1;">
-                            <div style="font-size:44px;margin-bottom:10px;">📋</div>
-                            <h3 style="margin:0 0 8px;color:#0f172a;font-size:16px;">Chưa có lượt đăng ký mới</h3>
-                            <p style="color:#64748b;margin:0;font-size:13.5px;max-width:500px;margin:0 auto;line-height:1.6;">
-                                Bất kỳ khi nào khách hàng điền Form nhận báo giá tại trang chủ, trang dự án hoặc bài viết tin tức, thông tin sẽ lập tức xuất hiện tại đây kèm nút gọi và chat Zalo ngay.
-                            </p>
-                        </div>
-                    <?php else : ?>
-                        <div style="overflow-x:auto;">
-                            <table class="wp-list-table widefat fixed striped posts" style="border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">
-                                <thead>
-                                    <tr>
-                                        <th style="width:36px;text-align:center;">#</th>
-                                        <th style="width:130px;">Thời gian</th>
-                                        <th style="width:200px;">Khách hàng</th>
-                                        <th style="width:140px;">Nhu cầu quan tâm</th>
-                                        <th style="width:95px;">Phân khúc</th>
-                                        <th style="width:170px;">Dự án</th>
-                                        <th style="width:160px;">Email</th>
-                                        <th>Nguồn trang</th>
-                                        <th style="width:50px;text-align:center;">Xóa</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($leads as $idx => $lead) : 
-                                        $phone = preg_replace('/[^0-9]/', '', $lead['phone'] ?? '');
-                                        $is_thap_tang = ($lead['type'] ?? '') === 'thap_tang';
-                                    ?>
-                                        <tr>
-                                            <td style="text-align:center;font-weight:700;color:#94a3b8;"><?php echo $idx + 1; ?></td>
-                                            <td style="font-size:12px;color:#64748b;">
-                                                <?php echo esc_html($lead['time'] ?? ''); ?>
-                                            </td>
-                                            <td>
-                                                <strong style="font-size:14px;color:#0b2246;display:block;margin-bottom:4px;"><?php echo esc_html($lead['name'] ?? 'Khách Hàng'); ?></strong>
-                                                <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-                                                    <a href="tel:<?php echo esc_attr($phone); ?>" style="font-weight:700;color:#0284c7;text-decoration:none;font-size:13px;">
-                                                        📞 <?php echo esc_html($lead['phone'] ?? ''); ?>
-                                                    </a>
-                                                    <?php if ($phone) : ?>
-                                                        <a href="https://zalo.me/<?php echo esc_attr($phone); ?>" target="_blank" style="display:inline-block;background:#0068ff;color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:3px;text-decoration:none;">Zalo</a>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid #fde68a;">
-                                                    <?php echo esc_html($lead['demand'] ?? 'Chung'); ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <?php if ($is_thap_tang) : ?>
-                                                    <span style="display:inline-block;background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">Thấp tầng</span>
-                                                <?php else : ?>
-                                                    <span style="display:inline-block;background:#e0f2fe;color:#075985;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">Cao tầng</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <strong style="color:#0f172a;font-size:13px;"><?php echo esc_html($lead['project'] ?? 'Dự án'); ?></strong>
-                                            </td>
-                                            <td style="font-size:12.5px;">
-                                                <?php echo !empty($lead['email']) ? '<a href="mailto:' . esc_attr($lead['email']) . '" style="color:#475569;">' . esc_html($lead['email']) . '</a>' : '<span style="color:#94a3b8;">—</span>'; ?>
-                                            </td>
-                                            <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                                <?php if (!empty($lead['source_url'])) : ?>
-                                                    <a href="<?php echo esc_url($lead['source_url']); ?>" target="_blank" title="<?php echo esc_attr($lead['source_url']); ?>" style="color:#0284c7;"><?php echo esc_html($lead['source_url']); ?></a>
-                                                <?php else : ?>
-                                                    <span style="color:#94a3b8;">Trang web</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td style="text-align:center;">
-                                                <a href="<?php echo wp_nonce_url(admin_url('edit.php?post_type=du_an&page=sunshine-customer-leads&action=delete&index=' . $idx), 'sunshine_delete_lead'); ?>" onclick="return confirm('Xóa khách hàng này?');" style="color:#ef4444;text-decoration:none;font-size:18px;font-weight:bold;" title="Xóa">
-                                                    &times;
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php endif; ?>
+            <!-- KHỐI THỬ NGHIỆM GỬI THỬ -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <!-- Test Telegram -->
+                <div>
+                    <h3 style="font-size:14px;font-weight:800;color:#0b2246;margin:0 0 8px;">🧪 Thử Nghiệm Bắn Tin Telegram</h3>
+                    <p style="font-size:12.5px;color:#64748b;margin:0 0 10px;">Bấm nút để gửi ngay 1 tin nhắn test tới Telegram của bạn.</p>
+                    <form method="post" action="">
+                        <?php wp_nonce_field('crm_test_tele_nonce'); ?>
+                        <button type="submit" name="crm_test_telegram" value="1" class="button" style="font-weight:700;">
+                            🚀 Gửi Thử Telegram Ngay
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Test Email -->
+                <div>
+                    <h3 style="font-size:14px;font-weight:800;color:#0b2246;margin:0 0 8px;">🧪 Thử Nghiệm Gửi Thư Email</h3>
+                    <p style="font-size:12.5px;color:#64748b;margin:0 0 10px;">Gửi email kiểm tra tới hòm thư quản trị viên.</p>
+                    <form method="post" action="" style="display:flex;gap:8px;">
+                        <?php wp_nonce_field('crm_test_email_nonce'); ?>
+                        <input type="email" name="test_email_to" value="<?php echo esc_attr(trim(explode(',', $emails)[0])); ?>" style="flex:1;padding:5px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:4px;">
+                        <button type="submit" name="crm_test_email" value="1" class="button" style="font-weight:700;">
+                            Gửi Thử
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
